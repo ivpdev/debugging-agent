@@ -9,6 +9,21 @@ namespace DebugAgentPrototype.Services;
 
 public class ToolsService
 {
+    private readonly AppState _appState;
+    private readonly LldbService _lldbService;
+    private readonly ToolRun _toolRun;
+    private readonly ToolSetBreakpoint _toolSetBreakpoint;
+    private readonly ToolGetSourceCode _toolGetSourceCode;
+
+    public ToolsService(AppState appState, LldbService lldbService)
+    {
+        _appState = appState;
+        _lldbService = lldbService;
+        _toolRun = new ToolRun(_appState, _lldbService);
+        _toolSetBreakpoint = new ToolSetBreakpoint(_appState, _lldbService);
+        _toolGetSourceCode = new ToolGetSourceCode(_appState, _lldbService);
+    }
+
     public static List<ToolConfig> GetTools()
     {
         return new List<ToolConfig>
@@ -20,22 +35,21 @@ public class ToolsService
             };
     }
 
-    private static async Task<ToolCall> callTool(ToolCallRequest toolCallRequest, AppState state, LldbService lldbService, CancellationToken ct)
+    private async Task<ToolCall> callTool(ToolCallRequest toolCallRequest, CancellationToken ct)
     {
         object? result;
         switch (toolCallRequest.Name)
         {
             case "run": 
-                result = await ToolRun.CallAsync(state, lldbService, ct);
+                result = await _toolRun.CallAsync(ct);
                 break;
             case "breakpoint":
-                result = await ToolSetBreakpoint.CallAsync(toolCallRequest.Arguments, state, lldbService, ct);
+                result = await _toolSetBreakpoint.CallAsync(toolCallRequest.Arguments, ct);
                 break;
             case "get_source_code":
-                result = ToolGetSourceCode.CallAsync(state, lldbService, ct);
+                result = _toolGetSourceCode.CallAsync(ct);
                 break;
             case "continue":
-                // TODO: Implement continue execution tool
                 result = "Execution continued";
                 break;
             default:
@@ -51,11 +65,11 @@ public class ToolsService
         };
     }
 
-    public static async Task<List<ToolCall>> callToolsAsync(List<ToolCallRequest> toolCallRequests, AppState state, LldbService lldbService, CancellationToken ct)
+    public async Task<List<ToolCall>> callToolsAsync(List<ToolCallRequest> toolCallRequests, CancellationToken ct)
     {
         var toolCalls = new List<ToolCall>();
         foreach (var toolCallRequest in toolCallRequests) {
-            var toolCall = await callTool(toolCallRequest, state, lldbService, ct);
+            var toolCall = await callTool(toolCallRequest, ct);
             toolCalls.Add(toolCall);
         }
         return toolCalls;

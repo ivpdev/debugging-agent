@@ -4,16 +4,26 @@ using DebugAgentPrototype.Models;
 
 namespace DebugAgentPrototype.Services;
 
-public static class ToolRun
+public class ToolRun
 {
+    private readonly AppState _appState;
+    private readonly LldbService _lldbService;
+
+    public ToolRun(AppState appState, LldbService lldbService)
+    {
+        _appState = appState;
+        _lldbService = lldbService;
+    }
+
     public static ToolConfig GetConfig()
     {
         return new ToolConfig("run", "Run the program", new { type = "object", properties = new { } });
     }
 
-    public static async Task<string> CallAsync(AppState state, LldbService lldbService, CancellationToken ct)
+    public async Task<string> CallAsync(CancellationToken ct)
     {
-        await lldbService.StartAsync(state.Breakpoints, ct);
+        await _lldbService.StartAsync(_appState.Breakpoints, ct);
+        await Task.Delay(2000, ct);
         return "Program run";
     }
 }

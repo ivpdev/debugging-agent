@@ -7,3 +7,8 @@ This eval test the following capabilities:
     - continue exection
     - inspect value to the frame
 - the agent can plan workflow consisting of multuple actions
+
+
+
+
+frame variable number

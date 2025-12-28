@@ -6,8 +6,17 @@ using DebugAgentPrototype.Models;
 
 namespace DebugAgentPrototype.Services;
 
-public static class ToolSetBreakpoint
+public class ToolSetBreakpoint
 {
+    private readonly AppState _appState;
+    private readonly LldbService _lldbService;
+
+    public ToolSetBreakpoint(AppState appState, LldbService lldbService)
+    {
+        _appState = appState;
+        _lldbService = lldbService;
+    }
+
     public static ToolConfig GetConfig()
     {
         return new ToolConfig("breakpoint", "Set a breakpoint at the given line number", new { 
@@ -45,16 +54,17 @@ public static class ToolSetBreakpoint
         return line;
     }
 
-    public static async Task<string> CallAsync(string parameters, AppState state, LldbService lldbService, CancellationToken ct)
+    public async Task<string> CallAsync(string parameters, CancellationToken ct)
     {
         try
         {
             int line = ParseLineFromParameters(parameters);
-            state.Breakpoints.Add(new Breakpoint(line));
+            _appState.Breakpoints.Add(new Breakpoint(line));
 
-            if (lldbService.IsRunning)
+            if (_lldbService.IsRunning)
             {
-                await lldbService.SendCommandAsync($"br set --file game.c --line {line}", ct);
+                await _lldbService.SendCommandAsync($"br set --file game.c --line {line}", ct);
+                await Task.Delay(1000, ct);
             }
 
             return $"Breakpoint set at line {line}";

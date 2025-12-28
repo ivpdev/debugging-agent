@@ -20,26 +20,24 @@ public class MainViewModel : ReactiveObject
     private readonly AppState _appState;
     private readonly LldbService _lldbService;
     private string _userInput = string.Empty;
-    private string _lldbInput = string.Empty;
-    private string _lldbOutput = string.Empty;
     private bool _isBusy;
-    private bool _isLldbRunning;
 
     public ObservableCollection<UIMessage> Messages { get; }
+    public LldbOutputViewModel LldbOutputViewModel { get; }
 
     public MainViewModel()
     {
         _appState = new AppState();
-        _lldbService = new LldbService();
+        _lldbService = new LldbService(_appState);
         var openRouterService = new OpenRouterService();
-        _agentService = new AgentService(_lldbService, openRouterService);
+        var toolsService = new ToolsService(_appState, _lldbService);
+        _agentService = new AgentService(_lldbService, openRouterService, _appState, toolsService);
 
-        _appState.Messages = _agentService.InitMessages(); //TODO init in a proper place
+        _appState.Messages = _agentService.InitMessages();
 
         Messages = new ObservableCollection<UIMessage>();
+        LldbOutputViewModel = new LldbOutputViewModel(_lldbService, _appState);
 
-        // Subscribe to lldb output
-        _lldbService.OutputReceived += OnLldbOutputReceived;
         _agentService.MessagesUpdated += OnMessagesUpdated;
 
         // SendMessageCommand is enabled when not busy and user input is not empty
@@ -51,28 +49,6 @@ public class MainViewModel : ReactiveObject
         SendMessageCommand = ReactiveCommand.CreateFromTask(
             SendMessageAsync,
             canSend);
-
-        // SendLldbCommand is enabled when lldb is running and input is not empty
-        var canSendLldb = this.WhenAnyValue(
-            x => x.IsLldbRunning,
-            x => x.LldbInput,
-            (running, input) => running && !string.IsNullOrWhiteSpace(input));
-
-        SendLldbCommand = ReactiveCommand.CreateFromTask(
-            SendLldbCommandAsync,
-            canSendLldb);
-    }
-
-    public string LldbOutput
-    {
-        get => _lldbOutput;
-        set => this.RaiseAndSetIfChanged(ref _lldbOutput, value);
-    }
-
-    public string LldbInput
-    {
-        get => _lldbInput;
-        set => this.RaiseAndSetIfChanged(ref _lldbInput, value);
     }
 
     public string UserInput
@@ -87,22 +63,7 @@ public class MainViewModel : ReactiveObject
         set => this.RaiseAndSetIfChanged(ref _isBusy, value);
     }
 
-    public bool IsLldbRunning
-    {
-        get => _isLldbRunning;
-        set => this.RaiseAndSetIfChanged(ref _isLldbRunning, value);
-    }
-
     public ReactiveCommand<Unit, Unit> SendMessageCommand { get; }
-    public ReactiveCommand<Unit, Unit> SendLldbCommand { get; }
-
-    private void OnLldbOutputReceived(object? sender, string output)
-    {
-        Dispatcher.UIThread.Post(() =>
-        {
-            LldbOutput += output + "\n";
-        });
-    }
 
     private void OnMessagesUpdated(object? sender, List<ChatMessage> messages)
     {   //TODO optimize 
@@ -115,34 +76,6 @@ public class MainViewModel : ReactiveObject
             }
         });
     }
-
-    private async Task SendLldbCommandAsync()
-    {
-        if (string.IsNullOrWhiteSpace(LldbInput) || !_lldbService.IsRunning)
-            return;
-
-        var command = LldbInput.Trim();
-        LldbInput = string.Empty; // Clear input immediately
-
-        try
-        {
-            await _lldbService.SendCommandAsync(command, CancellationToken.None);
-            // Update running state in case it changed
-            Dispatcher.UIThread.Post(() =>
-            {
-                IsLldbRunning = _lldbService.IsRunning;
-            });
-        }
-        catch (Exception ex)
-        {
-            Dispatcher.UIThread.Post(() =>
-            {
-                LldbOutput += $"Error: {ex.Message}\n";
-                IsLldbRunning = _lldbService.IsRunning;
-            });
-        }
-    }
-
 
     private List<UIMessage> ToViewModelMessagesNew(List<ChatMessage> messages)
     {
@@ -182,13 +115,13 @@ public class MainViewModel : ReactiveObject
 
         try
         {
-            _agentService.addUserMessage(userText, _appState);
+            _agentService.addUserMessage(userText);
 
             Dispatcher.UIThread.Post(() =>
             {
-                IsLldbRunning = _lldbService.IsRunning;
+                LldbOutputViewModel.UpdateRunningState();
             });
-            await _agentService.ProcessLastUserMessageAsync(_appState, CancellationToken.None);
+            await _agentService.ProcessLastUserMessageAsync(CancellationToken.None);
         }
         finally
         {

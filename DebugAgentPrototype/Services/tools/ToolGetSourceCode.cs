@@ -7,14 +7,23 @@ using DebugAgentPrototype.Models;
 
 namespace DebugAgentPrototype.Services;
 
-public static class ToolGetSourceCode
+public class ToolGetSourceCode
 {
+    private readonly AppState _appState;
+    private readonly LldbService _lldbService;
+
+    public ToolGetSourceCode(AppState appState, LldbService lldbService)
+    {
+        _appState = appState;
+        _lldbService = lldbService;
+    }
+
     public static ToolConfig GetConfig()
     {
         return new ToolConfig("get_source_code", "Get the source code of the program you inspect. Each line is prefixed with the line number", new { type = "object", properties = new { } });
     }
 
-    public static string CallAsync(AppState state, LldbService lldbService, CancellationToken ct)
+    public string CallAsync(CancellationToken ct)
     {
         return SourceCodeService.GetInspectedFileContent();
     }

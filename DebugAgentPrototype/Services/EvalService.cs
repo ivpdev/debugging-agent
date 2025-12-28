@@ -12,16 +12,12 @@ namespace DebugAgentPrototype.Services;
 
 public class EvalService
 {
-    private readonly AgentService _agentService;
     private readonly OpenRouterService _openRouterService;
-    private readonly LldbService _lldbService;
     private const string EvalsBasePath = "evals/evals";
 
-    public EvalService(AgentService agentService, OpenRouterService openRouterService, LldbService lldbService)
+    public EvalService(OpenRouterService openRouterService)
     {
-        _agentService = agentService;
         _openRouterService = openRouterService;
-        _lldbService = lldbService;
     }
 
     public async Task RunAllEvalsAsync(CancellationToken ct = default)
@@ -98,13 +94,14 @@ public class EvalService
         Console.WriteLine("User input: " + userInput);
         Console.WriteLine("Expected criteria: " + expectedCriteria);
 
-        var appState = new AppState
-        {
-            Messages = _agentService.InitMessages()
-        };
+        var appState = new AppState();
+        var lldbService = new LldbService(appState);
+        var toolsService = new ToolsService(appState, lldbService);
+        var agentService = new AgentService(lldbService, _openRouterService, appState, toolsService);
 
-        _agentService.addUserMessage(userInput, appState);
-        await _agentService.ProcessLastUserMessageAsync(appState, ct);
+        appState.Messages = agentService.InitMessages();
+        agentService.addUserMessage(userInput);
+        await agentService.ProcessLastUserMessageAsync(ct);
 
         var chatHistoryWithoutSystem = appState.Messages
             .Where(m => m.Role != ChatMessageRole.System)

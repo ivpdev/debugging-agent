@@ -17,10 +17,16 @@ public class LldbService
     private readonly StringBuilder _outputBuffer = new();
     private readonly object _outputLock = new();
     private bool _isRunning;
+    private readonly AppState _appState;
 
     public event EventHandler<string>? OutputReceived;
 
     public bool IsRunning => _isRunning;
+
+    public LldbService(AppState appState)
+    {
+        _appState = appState;
+    }
 
     public async Task StartAsync(IReadOnlyList<Breakpoint> breakpoints, CancellationToken ct)
     {
@@ -124,10 +130,12 @@ public class LldbService
         lock (_outputLock)
         {
             _outputBuffer.AppendLine(output);
+            _appState.LldbOutput = _outputBuffer.ToString();
         }
 
         OutputReceived?.Invoke(this, output);
     }
+
 
     public string GetOutput()
     {

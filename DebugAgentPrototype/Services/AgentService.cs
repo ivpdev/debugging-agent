@@ -10,17 +10,21 @@ namespace DebugAgentPrototype.Services;
 
 public class AgentService
 {
-    private const int MaxTurns = 3;
+    private const int MaxTurns = 10;
     
     private readonly LldbService _lldbService;
     private readonly OpenRouterService _openRouterService;
+    private readonly AppState _appState;
+    private readonly ToolsService _toolsService;
 
     public event EventHandler<List<ChatMessage>>? MessagesUpdated;
 
-    public AgentService(LldbService lldbService, OpenRouterService llmService)
+    public AgentService(LldbService lldbService, OpenRouterService llmService, AppState appState, ToolsService toolsService)
     {
         _lldbService = lldbService;
         _openRouterService = llmService;
+        _appState = appState;
+        _toolsService = toolsService;
     }
 
     private bool IsTaskComplete(AssistantMessage assistantMessage)
@@ -40,31 +44,31 @@ public class AgentService
         return assistantMessagesAfterLastUserCount > MaxTurns;
     }
 
-    public void addUserMessage(string userText, AppState state)
+    public void addUserMessage(string userText)
     {
-        state.Messages.Add(new ChatMessage { Role = ChatMessageRole.User, Text = userText });
-        MessagesUpdated?.Invoke(this, state.Messages);
+        _appState.Messages.Add(new ChatMessage { Role = ChatMessageRole.User, Text = userText });
+        MessagesUpdated?.Invoke(this, _appState.Messages);
     }
 
-    public async Task ProcessLastUserMessageAsync(AppState state, CancellationToken ct) {
+    public async Task ProcessLastUserMessageAsync(CancellationToken ct) {
         var tools = ToolsService.GetTools();
         
         ILlmResponse response;
         AssistantMessage assistantMessage;
 
         do {
-            response = await _openRouterService.CallModelAsync(state.Messages, tools);
+            response = await _openRouterService.CallModelAsync(_appState.Messages, tools);
 
             assistantMessage = toAssistantMessage(response);
-            state.Messages.Add(assistantMessage);
-            MessagesUpdated?.Invoke(this, state.Messages);
+            _appState.Messages.Add(assistantMessage);
+            MessagesUpdated?.Invoke(this, _appState.Messages);
 
             if (assistantMessage.ToolCallRequests.Count > 0) {
-                var toolCalls = await ToolsService.callToolsAsync(assistantMessage.ToolCallRequests, state, _lldbService, ct);
-                state.Messages.Add(new ToolCallMessage { ToolCalls = toolCalls });
-                MessagesUpdated?.Invoke(this, state.Messages);
+                var toolCalls = await _toolsService.callToolsAsync(assistantMessage.ToolCallRequests, ct);
+                _appState.Messages.Add(new ToolCallMessage { ToolCalls = toolCalls });
+                MessagesUpdated?.Invoke(this, _appState.Messages);
             }
-        } while (!IsTaskComplete(assistantMessage) && !IsMaxTurnsReached(state.Messages));
+        } while (!IsTaskComplete(assistantMessage) && !IsMaxTurnsReached(_appState.Messages));
     
     }
 
@@ -110,13 +114,14 @@ public class AgentService
 
     public List<ChatMessage> InitMessages()
     {
-        const string systemPrompt = """
+        var systemPrompt = """
         You are a helpful assistant that can help with debugging a program.
 
         You will have tools to help you accomplish the user's goals.
-        You can call tools up to 3 times before you respond to the user. 
+        You can call tools up to {MaxTurns} times before you respond to the user. 
 
-        """;
+        """.Replace("{MaxTurns}", MaxTurns.ToString());
+        
         return new List<ChatMessage> {
             new ChatMessage { Role = ChatMessageRole.System, Text = systemPrompt }
         };

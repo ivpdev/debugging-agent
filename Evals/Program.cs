@@ -13,10 +13,8 @@ class Program
     {
         LoadEnvironmentFile();
         
-        var lldbService = new LldbService();
         var openRouterService = new OpenRouterService();
-        var agentService = new AgentService(lldbService, openRouterService);
-        var evalService = new EvalService(agentService, openRouterService, lldbService);
+        var evalService = new EvalService(openRouterService);
 
         var cts = new CancellationTokenSource();
         Console.CancelKeyPress += (sender, e) =>

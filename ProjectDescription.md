@@ -88,6 +88,7 @@ Views/           - MainWindow.axaml + code-behind
 
 TODO 
 development approach EDD
+clean AI slop from this description
 directions
   - context compression
   - cost & latency optimization
@@ -97,6 +98,11 @@ directions
 
 
 TODO Code
+  - static methods and singletones
+  - wiring of the app
+  - how app state is managed
+  - fix warnings
+  - review flattened tool call history
   - clean console output
   - clean unsused models
   - move models close to logic
