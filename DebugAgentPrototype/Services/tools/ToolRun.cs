@@ -22,9 +22,9 @@ public class ToolRun
 
     public async Task<string> CallAsync(CancellationToken ct)
     {
-        await _lldbService.StartAsync(_appState.Breakpoints, ct);
+        await _lldbService.StartAsync(_appState.Breakpoints, ct); //TODO do we need pass breakpoints here?
         await Task.Delay(2000, ct);
-        return "Program run";
+        return _appState.LldbOutput;
     }
 }
 

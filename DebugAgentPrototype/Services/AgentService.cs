@@ -68,7 +68,7 @@ public class AgentService
                 _appState.Messages.Add(new ToolCallMessage { ToolCalls = toolCalls });
                 MessagesUpdated?.Invoke(this, _appState.Messages);
             }
-        } while (!IsTaskComplete(assistantMessage) && !IsMaxTurnsReached(_appState.Messages));
+        } while (!IsTaskComplete(assistantMessage) && !IsMaxTurnsReached(_appState.Messages)); //TODO the assistant can both call tools and respond to user. double check if it's considered in both conditions
     
     }
 

@@ -25,6 +25,6 @@ public class ToolLldbInput
     {
         await _lldbService.SendCommandAsync(command, ct);
         await Task.Delay(1000, ct);
-        return "Command sent to LLDB debugger";
+        return _appState.LldbOutput;
     }
 }

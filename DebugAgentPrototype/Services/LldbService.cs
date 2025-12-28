@@ -35,12 +35,12 @@ public class LldbService
             throw new InvalidOperationException("LLDB session is already running");
         }
 
-        var inspectedFilePath = SourceCodeService.GetInspectedFilePath();
+        var binaryPath = SourceCodeService.GetBinaryPath();
 
         var startInfo = new ProcessStartInfo
         {
             FileName = "lldb",
-            Arguments = inspectedFilePath,
+            Arguments = binaryPath,
             UseShellExecute = false,
             RedirectStandardInput = true,
             RedirectStandardOutput = true,
@@ -70,7 +70,7 @@ public class LldbService
         };
 
         _lldbProcess.Start();
-        _lldbInput = _lldbProcess.StandardInput;
+        _lldbInput = new StreamWriter(_lldbProcess.StandardInput.BaseStream, new UTF8Encoding(false));
         _lldbProcess.BeginOutputReadLine();
         _lldbProcess.BeginErrorReadLine();
         _isRunning = true;

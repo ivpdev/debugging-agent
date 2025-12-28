@@ -61,7 +61,10 @@ public class ToolSetBreakpoint
             int line = ParseLineFromParameters(parameters);
             _appState.Breakpoints.Add(new Breakpoint(line));
 
-            if (_lldbService.IsRunning)
+            //TODO do we need IsRunning check here?
+
+
+            if (_lldbService.IsRunning) //TODO check if breakpoinst pre run are picked up
             {
                 await _lldbService.SendCommandAsync($"br set --file game.c --line {line}", ct);
                 await Task.Delay(1000, ct);

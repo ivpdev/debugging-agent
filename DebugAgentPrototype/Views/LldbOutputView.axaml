@@ -3,6 +3,20 @@
              xmlns:vm="using:DebugAgentPrototype.ViewModels"
              x:Class="DebugAgentPrototype.Views.LldbOutputView"
              x:DataType="vm:LldbOutputViewModel">
+    <UserControl.Styles>
+        <Style Selector="TextBox#LldbOutputBox">
+            <Setter Property="Background" Value="Black"/>
+        </Style>
+        <Style Selector="TextBox#LldbOutputBox:pointerover">
+            <Setter Property="Background" Value="Black"/>
+        </Style>
+        <Style Selector="TextBox#LldbOutputBox:pressed">
+            <Setter Property="Background" Value="Black"/>
+        </Style>
+        <Style Selector="TextBox#LldbOutputBox:focus">
+            <Setter Property="Background" Value="Black"/>
+        </Style>
+    </UserControl.Styles>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -14,18 +28,24 @@
                    FontWeight="Bold" 
                    FontSize="14" 
                    Margin="10,10,10,10"/>
-        <ScrollViewer Grid.Row="1" 
-                      Margin="10,0,10,10"
-                      VerticalScrollBarVisibility="Auto"
-                      HorizontalScrollBarVisibility="Auto">
-            <Border Background="Black"
-                    BorderThickness="0">
-                <TextBlock Text="{Binding LldbOutput, Mode=OneWay}" 
-                           TextWrapping="Wrap"
-                           FontFamily="Consolas, Courier New, monospace"
-                           Foreground="LightGreen"/>
-            </Border>
-        </ScrollViewer>
+        <Border Grid.Row="1" 
+                Background="Black"
+                BorderThickness="0"
+                Margin="10,0,10,10">
+            <ScrollViewer VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Auto">
+                <TextBox x:Name="LldbOutputBox"
+                         Text="{Binding LldbOutput, Mode=OneWay}" 
+                         IsReadOnly="True"
+                         AcceptsReturn="True"
+                         TextWrapping="Wrap"
+                         FontFamily="Consolas, Courier New, monospace"
+                         Foreground="LightGreen"
+                         Background="Black"
+                         BorderThickness="0"
+                         Focusable="False"/>
+            </ScrollViewer>
+        </Border>
         <Grid Grid.Row="2" Margin="10,0,10,10">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
