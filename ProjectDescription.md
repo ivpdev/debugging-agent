@@ -86,8 +86,6 @@ Views/           - MainWindow.axaml + code-behind
 - `AppState`: Breakpoints, CurrentCallStack
 
 
-
-
 TODO 
 development approach EDD
 directions
@@ -99,9 +97,14 @@ directions
 
 
 TODO Code
+  - clean console output
+  - clean unsused models
+  - move models close to logic
+  - check Rider
   - check edge cases on the agent loop max turns
     - the UI is rendered correctly
     - evals work
+    - does assistant understands what to do with it?
   - add debugger output
   - fix .env
   - test running from scratch
