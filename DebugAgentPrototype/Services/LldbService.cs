@@ -28,6 +28,7 @@ public class LldbService
         _appState = appState;
     }
 
+    //TODO start on the app start, only use run tool to run
     public async Task StartAsync(IReadOnlyList<Breakpoint> breakpoints, CancellationToken ct)
     {
         if (_isRunning)
@@ -46,10 +47,12 @@ public class LldbService
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             CreateNoWindow = true,
-            StandardInputEncoding = Encoding.UTF8,
-            StandardOutputEncoding = Encoding.UTF8,
-            StandardErrorEncoding = Encoding.UTF8
+            StandardInputEncoding = new UTF8Encoding(false),
+            StandardOutputEncoding = new UTF8Encoding(false),
+            StandardErrorEncoding = new UTF8Encoding(false)
         };
+
+        Console.WriteLine($"[LLDB] Starting process with arguments: {string.Join(" ", startInfo.Arguments)}");
 
         _lldbProcess = new Process { StartInfo = startInfo };
 
@@ -70,6 +73,7 @@ public class LldbService
         };
 
         _lldbProcess.Start();
+
         _lldbInput = new StreamWriter(_lldbProcess.StandardInput.BaseStream, new UTF8Encoding(false));
         _lldbProcess.BeginOutputReadLine();
         _lldbProcess.BeginErrorReadLine();

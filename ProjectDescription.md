@@ -98,6 +98,7 @@ directions
 
 
 TODO Code
+  - make file
   - static methods and singletones
   - wiring of the app
   - how app state is managed

@@ -25,14 +25,11 @@ public class OpenRouterService
         }
         _httpClient.DefaultRequestHeaders.Add("HTTP-Referer", "https://github.com/your-repo");
         _httpClient.DefaultRequestHeaders.Add("X-Title", "Debug Agent Prototype");
-        Console.WriteLine($"API Key loaded: {_apiKey}");
     }
 
     
     public async Task<ILlmResponse> CallModelAsync(List<ChatMessage> messages, List<ToolConfig>? tools = null)
     {
-        Console.WriteLine("!Calling OpenRouter API with messages: " + messages.Count + " and tools: " + (tools?.Count ?? 0));
-
         if (string.IsNullOrEmpty(_apiKey))
         {
             throw new InvalidOperationException("OPENROUTER_API_KEY environment variable is not set");
@@ -47,37 +44,11 @@ public class OpenRouterService
 
         try
         {
-            // Debug: Print request body
-            var requestBodyJson = JsonSerializer.Serialize(requestBody, new JsonSerializerOptions { WriteIndented = true });
-            Console.WriteLine("=== REQUEST BODY ===");
-            Console.WriteLine(requestBodyJson);
-            Console.WriteLine("===================");
-
             var response = await _httpClient.PostAsJsonAsync(ApiUrl, requestBody);
             
-            // Debug: Print full response information
-            Console.WriteLine("=== RESPONSE INFO ===");
-            Console.WriteLine($"Status Code: {(int)response.StatusCode} {response.StatusCode}");
-            Console.WriteLine($"Reason Phrase: {response.ReasonPhrase}");
-            Console.WriteLine("Headers:");
-            foreach (var header in response.Headers)
-            {
-                Console.WriteLine($"  {header.Key}: {string.Join(", ", header.Value)}");
-            }
-            if (response.Content.Headers != null)
-            {
-                Console.WriteLine("Content Headers:");
-                foreach (var header in response.Content.Headers)
-                {
-                    Console.WriteLine($"  {header.Key}: {string.Join(", ", header.Value)}");
-                }
-            }
-            
+            Console.WriteLine($"[OpenRouter] Response status code: {(int)response.StatusCode} {response.StatusCode}");
             var responseBody = await response.Content.ReadAsStringAsync();
-            Console.WriteLine("Response Body:");
-            Console.WriteLine(responseBody);
-            Console.WriteLine("===================");
-
+            Console.WriteLine($"[OpenRouter] Response body: {responseBody}");
             response.EnsureSuccessStatusCode();
 
             var result = ParseOpenRouterResponse(responseBody);
