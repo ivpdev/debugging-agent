@@ -1,0 +1,20 @@
+The AI assistant must NOT create, modify, rename, or delete any files unless the user explicitly says to do so.
+
+Allowed:
+- Explain existing code
+- Suggest changes in chat only
+- Provide diffs or code snippets for review
+
+Not allowed:
+- Apply edits automatically
+- Create new files
+- Delete files
+- Rename files
+
+If an action would modify files in any way, the assistant must ask for explicit permission first.
+
+Do not add comments unless absolutely necessary.
+
+Prefer `const` over `var`. Use `var` only if the variable must be reassigned later.
+
+Only make changes directly related to the current task. Do not fix or refactor unrelated code in files you touch.

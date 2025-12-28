@@ -1,0 +1,5 @@
+---
+triple:          'arm64-apple-darwin'
+binary-path:     '/Users/ivp/dev/work/jb-test/test_program/game'
+relocations:     []
+...

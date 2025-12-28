@@ -1,0 +1,66 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="DebugAgentPrototype.Views.MessageView"
+             x:CompileBindings="False">
+    <Border Padding="8" Margin="0,2" CornerRadius="4">
+        <StackPanel>
+            <TextBlock Text="{Binding Role}" FontWeight="Bold" FontSize="12" Margin="0,0,0,4"/>
+            <TextBlock Text="{Binding Text}" TextWrapping="Wrap"/>
+            <ItemsControl x:CompileBindings="False" ItemsSource="{Binding ToolCallRequests}" Margin="0,8,0,0">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Background="#E3F2FD" Padding="6" Margin="0,2" CornerRadius="3">
+                            <StackPanel>
+                                <TextBlock FontWeight="SemiBold" FontSize="11" Margin="0,0,0,2">
+                                    <Run Text="🔧 "/>
+                                    <Run Text="{Binding Name}"/>
+                                </TextBlock>
+                                <TextBlock Text="{Binding Arguments}" 
+                                           FontSize="10" 
+                                           FontFamily="Consolas, Courier New, monospace"
+                                           TextWrapping="Wrap"
+                                           Foreground="#424242"/>
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <ItemsControl x:CompileBindings="False" ItemsSource="{Binding ToolCalls}" Margin="0,8,0,0">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Background="#E8F5E9" Padding="6" Margin="0,2" CornerRadius="3" BorderBrush="#4CAF50" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock FontWeight="SemiBold" FontSize="11" Margin="0,0,0,4">
+                                    <Run Text="✓ "/>
+                                    <Run Text="{Binding Name}"/>
+                                </TextBlock>
+                                <TextBlock Text="Arguments:" 
+                                           FontSize="9" 
+                                           FontWeight="SemiBold"
+                                           Margin="0,0,0,2"
+                                           Foreground="#2E7D32"/>
+                                <TextBlock Text="{Binding Arguments}" 
+                                           FontSize="10" 
+                                           FontFamily="Consolas, Courier New, monospace"
+                                           TextWrapping="Wrap"
+                                           Foreground="#424242"
+                                           Margin="0,0,0,4"/>
+                                <TextBlock Text="Result:" 
+                                           FontSize="9" 
+                                           FontWeight="SemiBold"
+                                           Margin="0,0,0,2"
+                                           Foreground="#2E7D32"/>
+                                <TextBlock Text="{Binding Result}" 
+                                           FontSize="10" 
+                                           FontFamily="Consolas, Courier New, monospace"
+                                           TextWrapping="Wrap"
+                                           Foreground="#1B5E20"/>
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
+    </Border>
+</UserControl>
+
