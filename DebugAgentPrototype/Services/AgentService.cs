@@ -17,7 +17,7 @@ public class AgentService
     private readonly AppState _appState;
     private readonly ToolsService _toolsService;
 
-    public event EventHandler<List<ChatMessage>>? MessagesUpdated;
+    public event EventHandler<ChatMessage>? MessageAdded;
 
     public AgentService(LldbService lldbService, OpenRouterService llmService, AppState appState, ToolsService toolsService)
     {
@@ -30,7 +30,6 @@ public class AgentService
     private bool IsTaskComplete(AssistantMessage assistantMessage)
     {
         return assistantMessage.ToolCallRequests.Count == 0 && !string.IsNullOrEmpty(assistantMessage.Text);
-        
     }
 
     private bool IsMaxTurnsReached(List<ChatMessage> messages)
@@ -48,8 +47,9 @@ public class AgentService
 
     public void addUserMessage(string userText)
     {
-        _appState.Messages.Add(new ChatMessage { Role = ChatMessageRole.User, Text = userText });
-        MessagesUpdated?.Invoke(this, _appState.Messages);
+        var newMessage = new ChatMessage { Role = ChatMessageRole.User, Text = userText };
+        _appState.Messages.Add(newMessage);
+        MessageAdded?.Invoke(this, newMessage);
     }
 
     public async Task ProcessLastUserMessageAsync(CancellationToken ct) {
@@ -63,12 +63,13 @@ public class AgentService
 
             assistantMessage = toAssistantMessage(response);
             _appState.Messages.Add(assistantMessage);
-            MessagesUpdated?.Invoke(this, _appState.Messages);
+            MessageAdded?.Invoke(this, assistantMessage);
 
             if (assistantMessage.ToolCallRequests.Count > 0) {
                 var toolCalls = await _toolsService.callToolsAsync(assistantMessage.ToolCallRequests, ct);
-                _appState.Messages.Add(new ToolCallMessage { ToolCalls = toolCalls });
-                MessagesUpdated?.Invoke(this, _appState.Messages);
+                var toolCallMessage = new ToolCallMessage { ToolCalls = toolCalls };
+                _appState.Messages.Add(toolCallMessage);
+                MessageAdded?.Invoke(this, toolCallMessage);
             }
         } while (!IsTaskComplete(assistantMessage) && !IsMaxTurnsReached(_appState.Messages)); //TODO the assistant can both call tools and respond to user. double check if it's considered in both conditions
     
@@ -116,16 +117,17 @@ public class AgentService
 
     public List<ChatMessage> InitMessages()
     {
+        var fileName = SourceCodeService.GetInspectedFilePath();
         var systemPrompt = """
         You are a helpful assistant that can help with debugging a program with LLDB debugger.
 
-        You will have tools to help you accomplish the user's goals.
+        You will have tools to help you accomplish the user's goals. The file you are inspecting is {fileName}.
 
         Sometimes the program will ask for input. You can use the stdin tool to provide input to the program. 
         Provide the input in the format the program expects. For example if the program expects a number, you should provide a number without any other text.
         The tool will return the output of the program after the input is provided.
 
-        
+    
         You can call tools up to {MaxTurns} times before you respond to the user. 
 
         """.Replace("{MaxTurns}", MaxTurns.ToString()); //TODO maybe add a tool to call tools?

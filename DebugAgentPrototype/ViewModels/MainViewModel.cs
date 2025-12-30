@@ -22,7 +22,9 @@ public class MainViewModel : ReactiveObject
     private string _userInput = string.Empty;
     private bool _isBusy;
 
-    public ObservableCollection<UIMessage> Messages { get; }
+    private bool COMPRESS_TOOL_CALL_SEQUENCE = false;
+
+    public ObservableCollection<UIMessage> UIMessages { get; }
     public LldbOutputViewModel LldbOutputViewModel { get; }
 
     public MainViewModel()
@@ -35,10 +37,10 @@ public class MainViewModel : ReactiveObject
 
         _appState.Messages = _agentService.InitMessages();
 
-        Messages = new ObservableCollection<UIMessage>();
+        UIMessages = new ObservableCollection<UIMessage>();
         LldbOutputViewModel = new LldbOutputViewModel(_lldbService, _appState);
 
-        _agentService.MessagesUpdated += OnMessagesUpdated;
+        _agentService.MessageAdded += OnMessageAdded;
 
         // SendMessageCommand is enabled when not busy and user input is not empty
         var canSend = this.WhenAnyValue(
@@ -81,14 +83,19 @@ public class MainViewModel : ReactiveObject
 
     public ReactiveCommand<Unit, Unit> SendMessageCommand { get; }
 
-    private void OnMessagesUpdated(object? sender, List<ChatMessage> messages)
-    {   //TODO optimize 
+    private void OnMessageAdded(object? sender, ChatMessage message)
+    {
         Dispatcher.UIThread.Post(() =>
         {
-            Messages.Clear();
-            foreach (var message in ToViewModelMessages(messages))
-            {
-                Messages.Add(message);
+            if (COMPRESS_TOOL_CALL_SEQUENCE && message.Role == ChatMessageRole.Tool) {
+                var lastUIMessage = UIMessages.LastOrDefault();
+                if (lastUIMessage != null && lastUIMessage.Role == ChatMessageRole.Tool) {
+                    var toolCallUIMessage = new UIMessage(message);
+                    UIMessages.Remove(lastUIMessage);
+                    UIMessages.Add(toolCallUIMessage);
+                }
+            } else {
+                UIMessages.Add(new UIMessage(message));
             }
         });
     }
