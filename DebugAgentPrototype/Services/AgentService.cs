@@ -10,7 +10,7 @@ namespace DebugAgentPrototype.Services;
 
 public class AgentService
 {
-    private const int MaxTurns = 5;
+    private const int MaxTurns = 10;
     
     private readonly LldbService _lldbService;
     private readonly OpenRouterService _openRouterService;
@@ -41,7 +41,9 @@ public class AgentService
             .Skip(lastUserMessageIndex + 1)
             .Where(m => m.Role == ChatMessageRole.Assistant).Count();
         
-        return assistantMessagesAfterLastUserCount > MaxTurns;
+        var isMaxTurnsReached = assistantMessagesAfterLastUserCount > MaxTurns;
+        Console.WriteLine($"Is max turns reached: {isMaxTurnsReached}");
+        return isMaxTurnsReached;
     }
 
     public void addUserMessage(string userText)

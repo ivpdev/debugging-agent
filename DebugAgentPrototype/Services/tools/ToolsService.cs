@@ -30,8 +30,8 @@ public class ToolsService
     {
         return new List<ToolConfig>
         {
-            ToolRun.GetConfig(),
-            ToolSetBreakpoint.GetConfig(),
+            /*ToolRun.GetConfig(),
+            ToolSetBreakpoint.GetConfig(),*/
             ToolGetSourceCode.GetConfig(),
             ToolStdin.GetConfig()
             };

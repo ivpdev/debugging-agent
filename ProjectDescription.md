@@ -99,6 +99,8 @@ directions
 
 TODO Code
   - make file
+  - fix rerendering of the history (scrolly is reset)
+  - try to remove tools
   - static methods and singletones
   - wiring of the app
   - how app state is managed
