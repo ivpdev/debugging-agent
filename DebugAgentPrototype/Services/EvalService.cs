@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
-using System.Threading;
 using System.Threading.Tasks;
 using DebugAgentPrototype.Models;
 
@@ -20,7 +19,7 @@ public class EvalService
         _openRouterService = openRouterService;
     }
 
-    public async Task RunEvalAsync(string evalName, CancellationToken ct = default)
+    public async Task RunEvalAsync(string evalName)
     {
         var evalsPath = FindEvalsDirectory();
         if (evalsPath == null)
@@ -48,11 +47,11 @@ public class EvalService
         
         try
         {
-            await RunEvalFromFolderAsync(evalFolder, ct);
+            await RunEvalFromFolderAsync(evalFolder);
             var resultPath = Path.Combine(evalFolder, "result.md");
             if (File.Exists(resultPath))
             {
-                var resultContent = await File.ReadAllTextAsync(resultPath, ct);
+                var resultContent = await File.ReadAllTextAsync(resultPath);
                 var status = resultContent.TrimStart().StartsWith("PASS", StringComparison.OrdinalIgnoreCase) ? "PASS" : "FAIL";
                 Console.WriteLine($"\n=== Result: {status} ===");
             }
@@ -69,7 +68,7 @@ public class EvalService
         }
     }
 
-    public async Task RunAllEvalsAsync(CancellationToken ct = default)
+    public async Task RunAllEvalsAsync()
     {
         var evalsPath = FindEvalsDirectory();
         if (evalsPath == null)
@@ -92,11 +91,11 @@ public class EvalService
             
             try
             {
-                await RunEvalFromFolderAsync(evalFolder, ct);
+                await RunEvalFromFolderAsync(evalFolder);
                 var resultPath = Path.Combine(evalFolder, "result.md");
                 if (File.Exists(resultPath))
                 {
-                    var resultContent = await File.ReadAllTextAsync(resultPath, ct);
+                    var resultContent = await File.ReadAllTextAsync(resultPath);
                     var status = resultContent.TrimStart().StartsWith("PASS", StringComparison.OrdinalIgnoreCase) ? "PASS" : "FAIL";
                     results.Add((evalName, status));
                 }
@@ -120,7 +119,7 @@ public class EvalService
         }
     }
 
-    private async Task RunEvalFromFolderAsync(string evalFolder, CancellationToken ct)
+    private async Task RunEvalFromFolderAsync(string evalFolder)
     {
         var userInputPath = Path.Combine(evalFolder, "user-input.md");
         var expectedPath = Path.Combine(evalFolder, "expected.md");
@@ -137,21 +136,21 @@ public class EvalService
             throw new FileNotFoundException($"expected.md not found in {evalFolder}");
         }
 
-        var userInput = await File.ReadAllTextAsync(userInputPath, ct);
-        var expectedCriteria = await File.ReadAllTextAsync(expectedPath, ct);
+        var userInput = await File.ReadAllTextAsync(userInputPath);
+        var expectedCriteria = await File.ReadAllTextAsync(expectedPath);
 
         Console.WriteLine("User input: " + userInput);
         Console.WriteLine("Expected criteria: " + expectedCriteria);
 
         var appState = new AppState();
         var lldbService = new LldbService(appState);
-        await lldbService.InitializeAsync(ct);
+        await lldbService.InitializeAsync();
         var toolsService = new ToolsService(appState, lldbService);
         var agentService = new AgentService(lldbService, _openRouterService, appState, toolsService);
 
         appState.Messages = agentService.InitMessages();
         agentService.AddUserMessage(userInput);
-        await agentService.ProcessLastUserMessageAsync(ct);
+        await agentService.ProcessLastUserMessageAsync();
 
         var chatHistoryWithoutSystem = appState.Messages
             .Where(m => m.Role != MessageRole.System)
@@ -164,15 +163,15 @@ public class EvalService
             WriteIndented = true
         });
 
-        await File.WriteAllTextAsync(chatHistoryPath, chatHistoryJson, ct);
+        await File.WriteAllTextAsync(chatHistoryPath, chatHistoryJson);
         Console.WriteLine($"Chat history saved to {chatHistoryPath}");
 
-        var judgeResult = await JudgeEvalAsync(chatHistoryWithoutSystem, expectedCriteria, ct);
-        await File.WriteAllTextAsync(resultPath, judgeResult, ct);
+        var judgeResult = await JudgeEvalAsync(chatHistoryWithoutSystem, expectedCriteria);
+        await File.WriteAllTextAsync(resultPath, judgeResult);
         Console.WriteLine($"Result written to {resultPath}");
     }
 
-    private async Task<string> JudgeEvalAsync(List<Message> chatHistory, string expectedCriteria, CancellationToken ct)
+    private async Task<string> JudgeEvalAsync(List<Message> chatHistory, string expectedCriteria)
     {
         var judgePrompt = BuildJudgePrompt(chatHistory, expectedCriteria);
         

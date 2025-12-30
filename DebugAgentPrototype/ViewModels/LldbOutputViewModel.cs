@@ -1,6 +1,5 @@
 using System;
 using System.Reactive;
-using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Threading;
 using DebugAgentPrototype.Models;
@@ -69,7 +68,7 @@ public class LldbOutputViewModel : ReactiveObject
 
         try
         {
-            await _lldbService.SendCommandAsync(command, CancellationToken.None);
+            await _lldbService.SendCommandAsync(command);
             Dispatcher.UIThread.Post(() =>
             {
                 IsLldbRunning = _lldbService.IsRunning;

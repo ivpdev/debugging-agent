@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Threading;
 using System.Threading.Tasks;
 using DebugAgentPrototype.Services;
 using DotNetEnv;
@@ -16,28 +15,17 @@ class Program
         var openRouterService = new OpenRouterService();
         var evalService = new EvalService(openRouterService);
 
-        var cts = new CancellationTokenSource();
-        Console.CancelKeyPress += (sender, e) =>
-        {
-            e.Cancel = true;
-            cts.Cancel();
-        };
-
         try
         {
             if (args.Length > 0 && !string.IsNullOrWhiteSpace(args[0]))
             {
                 var evalName = args[0].Trim();
-                await evalService.RunEvalAsync(evalName, cts.Token);
+                await evalService.RunEvalAsync(evalName);
             }
             else
             {
-                await evalService.RunAllEvalsAsync(cts.Token);
+                await evalService.RunAllEvalsAsync();
             }
-        }
-        catch (OperationCanceledException)
-        {
-            Console.WriteLine("\nEvaluation cancelled by user");
         }
         catch (Exception ex)
         {
@@ -89,4 +77,5 @@ class Program
         }
     }
 }
+
 

@@ -5,7 +5,6 @@ using System.Linq;
 using System.Reactive;
 using System.Text;
 using System.Text.Json;
-using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Threading;
 using DebugAgentPrototype.Models;
@@ -58,7 +57,7 @@ public class MainViewModel : ReactiveObject
     {
         try
         {
-            await _lldbService.InitializeAsync(CancellationToken.None);
+            await _lldbService.InitializeAsync();
             Dispatcher.UIThread.Post(() =>
             {
                 LldbOutputViewModel.UpdateRunningState();
@@ -145,7 +144,7 @@ public class MainViewModel : ReactiveObject
             {
                 LldbOutputViewModel.UpdateRunningState();
             });
-            await _agentService.ProcessLastUserMessageAsync(CancellationToken.None);
+            await _agentService.ProcessLastUserMessageAsync();
         }
         finally
         {

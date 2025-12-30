@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Threading;
 using System.Threading.Tasks;
 using DebugAgentPrototype.Models;
 
@@ -52,7 +51,7 @@ public class AgentService
         MessageAdded?.Invoke(this, newMessage);
     }
 
-    public async Task ProcessLastUserMessageAsync(CancellationToken ct) {
+    public async Task ProcessLastUserMessageAsync() {
         var tools = ToolsService.GetTools();
 
         AssistantMessage assistantMessage;
@@ -60,12 +59,12 @@ public class AgentService
         do {
             var response = await _openRouterService.CallModelAsync(_appState.Messages, tools);
 
-            assistantMessage = toAssistantMessage(response);
+            assistantMessage = ToAssistantMessage(response);
             _appState.Messages.Add(assistantMessage);
             MessageAdded?.Invoke(this, assistantMessage);
 
             if (assistantMessage.ToolCallRequests.Count > 0) {
-                var toolCalls = await _toolsService.callToolsAsync(assistantMessage.ToolCallRequests, ct);
+                var toolCalls = await _toolsService.callToolsAsync(assistantMessage.ToolCallRequests);
                 var toolCallMessage = new ToolCallMessage { ToolCalls = toolCalls };
                 _appState.Messages.Add(toolCallMessage);
                 MessageAdded?.Invoke(this, toolCallMessage);
@@ -105,7 +104,7 @@ public class AgentService
         Console.WriteLine("===========================");
     }
 
-    private AssistantMessage toAssistantMessage(ILlmResponse response)
+    private AssistantMessage ToAssistantMessage(ILlmResponse response)
     {
         var toolCallRequests = response.ToolCalls.Select(tc => new ToolCallRequest
         {

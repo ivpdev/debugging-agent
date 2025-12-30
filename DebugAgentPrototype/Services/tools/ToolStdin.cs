@@ -1,6 +1,5 @@
 using System;
 using System.Text.Json;
-using System.Threading;
 using System.Threading.Tasks;
 using DebugAgentPrototype.Models;
 
@@ -50,13 +49,13 @@ public class ToolStdin
         return textElement.GetString() ?? throw new ArgumentException("'text' must be a non-null string");
     }
 
-    public async Task<string> CallAsync(string parameters, CancellationToken ct)
+    public async Task<string> CallAsync(string parameters)
     {
         try
         {
             string text = ParseTextFromParameters(parameters);
-            await _lldbService.SendCommandAsync(text, ct);
-            await Task.Delay(1000, ct);
+            await _lldbService.SendCommandAsync(text);
+            await Task.Delay(1000);
             return _appState.LldbOutput;
         }
         catch (JsonException ex)

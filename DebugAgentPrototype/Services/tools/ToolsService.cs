@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Text.Json;
-using System.Threading;
 using System.Threading.Tasks;
 using DebugAgentPrototype.Models;
 
@@ -31,16 +30,16 @@ public class ToolsService
         };
     }
 
-    private async Task<ToolCall> callTool(ToolCallRequest toolCallRequest, CancellationToken ct)
+    private async Task<ToolCall> callTool(ToolCallRequest toolCallRequest)
     {
         object? result;
         switch (toolCallRequest.Name)
         {
             case "get_source_code":
-                result = _toolGetSourceCode.CallAsync(ct);
+                result = _toolGetSourceCode.CallAsync();
                 break;
             case "stdin_write":
-                result = await _toolStdin.CallAsync(toolCallRequest.Arguments, ct);
+                result = await _toolStdin.CallAsync(toolCallRequest.Arguments);
                 break;
             
             default:
@@ -56,11 +55,11 @@ public class ToolsService
         };
     }
 
-    public async Task<List<ToolCall>> callToolsAsync(List<ToolCallRequest> toolCallRequests, CancellationToken ct)
+    public async Task<List<ToolCall>> callToolsAsync(List<ToolCallRequest> toolCallRequests)
     {
         var toolCalls = new List<ToolCall>();
         foreach (var toolCallRequest in toolCallRequests) {
-            var toolCall = await callTool(toolCallRequest, ct);
+            var toolCall = await callTool(toolCallRequest);
             toolCalls.Add(toolCall);
         }
         return toolCalls;

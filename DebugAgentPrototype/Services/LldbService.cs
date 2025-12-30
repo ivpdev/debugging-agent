@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using DebugAgentPrototype.Models;
 
@@ -28,7 +27,7 @@ public class LldbService
         _appState = appState;
     }
 
-    public async Task InitializeAsync(CancellationToken ct)
+    public async Task InitializeAsync()
     {
         if (_isRunning)
         {
@@ -78,10 +77,10 @@ public class LldbService
         _lldbProcess.BeginErrorReadLine();
         _isRunning = true;
 
-        await Task.Delay(500, ct);
+        await Task.Delay(500);
     }
 
-    public async Task SendCommandAsync(string command, CancellationToken ct)
+    public async Task SendCommandAsync(string command)
     {
         if (!_isRunning || _lldbInput == null)
         {
