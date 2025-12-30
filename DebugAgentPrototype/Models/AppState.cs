@@ -4,9 +4,7 @@ using System.Collections.Generic;
 namespace DebugAgentPrototype.Models;
 
 public class AppState
-{
-    public List<Breakpoint> Breakpoints { get; set; } = new(); //TODO do we need it in the state?
-    public List<ChatMessage> Messages { get; set; } = new();
+{ public List<ChatMessage> Messages { get; set; } = new();
     public string LldbOutput { get; set; } = string.Empty;
 }
 

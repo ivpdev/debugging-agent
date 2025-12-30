@@ -11,8 +11,6 @@ public class ToolsService
 {
     private readonly AppState _appState;
     private readonly LldbService _lldbService;
-    private readonly ToolRun _toolRun;
-    private readonly ToolSetBreakpoint _toolSetBreakpoint;
     private readonly ToolGetSourceCode _toolGetSourceCode;
     private readonly ToolStdin _toolStdin;
 
@@ -20,8 +18,6 @@ public class ToolsService
     {
         _appState = appState;
         _lldbService = lldbService;
-        _toolRun = new ToolRun(_appState, _lldbService);
-        _toolSetBreakpoint = new ToolSetBreakpoint(_appState, _lldbService);
         _toolGetSourceCode = new ToolGetSourceCode(_appState, _lldbService);
         _toolStdin = new ToolStdin(_appState, _lldbService);
     }
@@ -30,11 +26,9 @@ public class ToolsService
     {
         return new List<ToolConfig>
         {
-            /*ToolRun.GetConfig(),
-            ToolSetBreakpoint.GetConfig(),*/
             ToolGetSourceCode.GetConfig(),
             ToolStdin.GetConfig()
-            };
+        };
     }
 
     private async Task<ToolCall> callTool(ToolCallRequest toolCallRequest, CancellationToken ct)
@@ -42,12 +36,6 @@ public class ToolsService
         object? result;
         switch (toolCallRequest.Name)
         {
-            case "run": 
-                result = await _toolRun.CallAsync(ct);
-                break;
-            case "breakpoint":
-                result = await _toolSetBreakpoint.CallAsync(toolCallRequest.Arguments, ct);
-                break;
             case "get_source_code":
                 result = _toolGetSourceCode.CallAsync(ct);
                 break;

@@ -81,26 +81,6 @@ public class LldbService
         await Task.Delay(500, ct);
     }
 
-    public async Task StartAsync(IReadOnlyList<Breakpoint> breakpoints, CancellationToken ct)
-    {
-        if (!_isRunning)
-        {
-            await InitializeAsync(ct);
-        }
-
-        if (breakpoints.Count > 0)
-        {
-            await Task.Delay(500, ct);
-            foreach (var bp in breakpoints)
-            {
-                await SendCommandAsync($"br set --file game.c --line {bp.Line}", ct);
-            }
-        }
-
-        await Task.Delay(500, ct);
-        await SendCommandAsync("run", ct);
-    }
-
     public async Task SendCommandAsync(string command, CancellationToken ct)
     {
         if (!_isRunning || _lldbInput == null)

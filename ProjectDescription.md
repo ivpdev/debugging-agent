@@ -98,6 +98,7 @@ directions
 
 
 TODO Code
+  - remove cancellation token
   - make file
   - fix rerendering of the history (scrolly is reset)
   - try to remove tools
