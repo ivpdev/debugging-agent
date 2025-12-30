@@ -28,7 +28,7 @@ public class OpenRouterService
     }
 
     
-    public async Task<ILlmResponse> CallModelAsync(List<ChatMessage> messages, List<ToolConfig>? tools = null)
+    public async Task<ILlmResponse> CallModelAsync(List<Models.Message> messages, List<ToolConfig>? tools = null)
     {
         if (string.IsNullOrEmpty(_apiKey))
         {
@@ -79,7 +79,7 @@ public class OpenRouterService
         };
     }
 
-    public object toOpenRouterMessage(ChatMessage message) {
+    public object toOpenRouterMessage(Models.Message message) {
         if (message is AssistantMessage assistantMsg)
         {
             var result = new Dictionary<string, object>
@@ -117,12 +117,26 @@ public class OpenRouterService
             
             return toolMessages;
         }
-        
-        return new Dictionary<string, object>
+
+        if (message is UserMessage userMsg)
         {
-            ["role"] = message.Role.ToString().ToLowerInvariant(),
-            ["content"] = message.Text
-        };
+            return new Dictionary<string, object>
+            {
+                ["role"] = "user",
+                ["content"] = userMsg.Text
+            };
+        }
+        
+        if (message is SystemMessage systemMsg)
+        {
+            return new Dictionary<string, object>
+            {
+                ["role"] = "system",
+                ["content"] = systemMsg.Text
+            };
+        }
+
+        throw new Exception($"Unknown message type: {message.GetType()}");
     }
 
     //TODO simplify this

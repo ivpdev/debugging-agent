@@ -84,13 +84,13 @@ public class MainViewModel : ReactiveObject
 
     public ReactiveCommand<Unit, Unit> SendMessageCommand { get; }
 
-    private void OnMessageAdded(object? sender, ChatMessage message)
+    private void OnMessageAdded(object? sender, Message message)
     {
         Dispatcher.UIThread.Post(() =>
         {
-            if (COMPRESS_TOOL_CALL_SEQUENCE && message.Role == ChatMessageRole.Tool) {
+            if (COMPRESS_TOOL_CALL_SEQUENCE && message.Role == MessageRole.Tool) {
                 var lastUIMessage = UIMessages.LastOrDefault();
-                if (lastUIMessage != null && lastUIMessage.Role == ChatMessageRole.Tool) {
+                if (lastUIMessage != null && lastUIMessage.Role == MessageRole.Tool) {
                     var toolCallUIMessage = new UIMessage(message);
                     UIMessages.Remove(lastUIMessage);
                     UIMessages.Add(toolCallUIMessage);
@@ -101,15 +101,15 @@ public class MainViewModel : ReactiveObject
         });
     }
 
-    private List<UIMessage> ToViewModelMessagesNew(List<ChatMessage> messages)
+    private List<UIMessage> ToViewModelMessagesNew(List<Message> messages)
     {
         var viewModelMessages = messages
-            .Where(message => message.Role != ChatMessageRole.System && message.Role != ChatMessageRole.Tool)
+            .Where(message => message.Role != MessageRole.System && message.Role != MessageRole.Tool)
             .Select(message => new UIMessage(message))
             .ToList();
 
-        var lastTextMessageIndex = messages.FindLastIndex(m => !string.IsNullOrEmpty(m.Text));
-        var lastAssistantToolCallMessageIndex = messages.FindLastIndex(m => m.Role == ChatMessageRole.Assistant && m is AssistantMessage am && am.ToolCallRequests.Count > 0);
+        var lastTextMessageIndex = messages.FindLastIndex(m => (m is UserMessage) || m is AssistantMessage && !string.IsNullOrEmpty((m as AssistantMessage)?.Text));
+        var lastAssistantToolCallMessageIndex = messages.FindLastIndex(m => m.Role == MessageRole.Assistant && m is AssistantMessage am && am.ToolCallRequests.Count > 0);
 
         if (lastAssistantToolCallMessageIndex > lastTextMessageIndex && messages[lastAssistantToolCallMessageIndex] is AssistantMessage assistantMessage)
         {
@@ -120,10 +120,10 @@ public class MainViewModel : ReactiveObject
         return viewModelMessages;
     }
 
-    private List<UIMessage> ToViewModelMessages(List<ChatMessage> messages)
+    private List<UIMessage> ToViewModelMessages(List<Message> messages)
     {
         return messages
-            .Where(message => message.Role != ChatMessageRole.System)
+            .Where(message => message.Role != MessageRole.System)
             .Select(message => new UIMessage(message))
             .ToList();
     }
@@ -139,7 +139,7 @@ public class MainViewModel : ReactiveObject
 
         try
         {
-            _agentService.addUserMessage(userText);
+            _agentService.AddUserMessage(userText);
 
             Dispatcher.UIThread.Post(() =>
             {
@@ -156,18 +156,27 @@ public class MainViewModel : ReactiveObject
 
 public class UIMessage {
 
-    public ChatMessageRole Role { get; set; }
+    public MessageRole Role { get; set; }
     public string Text { get; set; } = string.Empty;
     public List<ToolCallRequest> ToolCallRequests { get; set; } = new List<ToolCallRequest>();
     public List<UIToolCall> ToolCalls { get; set; } = new List<UIToolCall>();
     public string ProcessingStatus { get; set; } = string.Empty;
 
-    public UIMessage(ChatMessage message)
+    public UIMessage(Message message)
     {
         Role = message.Role;
-        Text = message.Text;
+        
+        if (message is UserMessage userMessage)
+        {
+            Text = userMessage.Text;
+        }
+        if (message is SystemMessage systemMessage)
+        {
+            Text = systemMessage.Text;
+        }
         if (message is AssistantMessage assistantMessage)
         {
+            Text = assistantMessage.Text ?? string.Empty;
             ToolCallRequests = assistantMessage.ToolCallRequests;
         }
         if (message is ToolCallMessage toolCallMessage)

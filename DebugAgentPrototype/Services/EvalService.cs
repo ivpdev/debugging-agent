@@ -150,11 +150,11 @@ public class EvalService
         var agentService = new AgentService(lldbService, _openRouterService, appState, toolsService);
 
         appState.Messages = agentService.InitMessages();
-        agentService.addUserMessage(userInput);
+        agentService.AddUserMessage(userInput);
         await agentService.ProcessLastUserMessageAsync(ct);
 
         var chatHistoryWithoutSystem = appState.Messages
-            .Where(m => m.Role != ChatMessageRole.System)
+            .Where(m => m.Role != MessageRole.System)
             .ToList();
 
         var serializableHistory = chatHistoryWithoutSystem.Select(m => SerializeMessage(m)).ToList();
@@ -172,29 +172,21 @@ public class EvalService
         Console.WriteLine($"Result written to {resultPath}");
     }
 
-    private async Task<string> JudgeEvalAsync(List<ChatMessage> chatHistory, string expectedCriteria, CancellationToken ct)
+    private async Task<string> JudgeEvalAsync(List<Message> chatHistory, string expectedCriteria, CancellationToken ct)
     {
         var judgePrompt = BuildJudgePrompt(chatHistory, expectedCriteria);
         
-        var judgeMessages = new List<ChatMessage>
+        var judgeMessages = new List<Message>
         {
-            new ChatMessage
-            {
-                Role = ChatMessageRole.System,
-                Text = "You are an evaluation judge. Analyze the chat history and determine if the evaluation criteria are met. Your response must start with either PASS or FAIL. If FAIL, provide reasoning on a new line."
-            },
-            new ChatMessage
-            {
-                Role = ChatMessageRole.User,
-                Text = judgePrompt
-            }
+            new SystemMessage("You are an evaluation judge. Analyze the chat history and determine if the evaluation criteria are met. Your response must start with either PASS or FAIL. If FAIL, provide reasoning on a new line."),
+            new UserMessage(judgePrompt)
         };
 
         var response = await _openRouterService.CallModelAsync(judgeMessages, null);
         return response.Content ?? "FAIL\n\nJudge did not return a response";
     }
 
-    private string BuildJudgePrompt(List<ChatMessage> chatHistory, string expectedCriteria)
+    private string BuildJudgePrompt(List<Message> chatHistory, string expectedCriteria)
     {
         var sb = new StringBuilder();
         sb.AppendLine("Evaluate the following chat history against the criteria:");
@@ -232,9 +224,13 @@ public class EvalService
                     sb.AppendLine($"Tool Result: {toolCall.Name} -> {resultJson}");
                 }
             }
-            else
+            else if (message is UserMessage userMsg)
             {
-                sb.AppendLine(message.Text);
+                sb.AppendLine(userMsg.Text);
+            }
+            else if (message is SystemMessage systemMsg)
+            {
+                sb.AppendLine(systemMsg.Text);
             }
             
             sb.AppendLine();
@@ -276,12 +272,11 @@ public class EvalService
         return null;
     }
 
-    private object SerializeMessage(ChatMessage message)
+    private object SerializeMessage(Message message)
     {
         var baseMessage = new Dictionary<string, object>
         {
             ["Role"] = message.Role.ToString(),
-            ["Text"] = message.Text,
             ["Timestamp"] = message.Timestamp
         };
 

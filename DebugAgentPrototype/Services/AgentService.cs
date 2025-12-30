@@ -17,7 +17,7 @@ public class AgentService
     private readonly AppState _appState;
     private readonly ToolsService _toolsService;
 
-    public event EventHandler<ChatMessage>? MessageAdded;
+    public event EventHandler<Message>? MessageAdded;
 
     public AgentService(LldbService lldbService, OpenRouterService llmService, AppState appState, ToolsService toolsService)
     {
@@ -32,34 +32,33 @@ public class AgentService
         return assistantMessage.ToolCallRequests.Count == 0 && !string.IsNullOrEmpty(assistantMessage.Text);
     }
 
-    private bool IsMaxTurnsReached(List<ChatMessage> messages)
+    private bool IsMaxTurnsReached(List<Message> messages)
     {
-        var lastUserMessageIndex = messages.FindLastIndex(m => m.Role == ChatMessageRole.User);
+        var lastUserMessageIndex = messages.FindLastIndex(m => m.Role == MessageRole.User);
     
         var assistantMessagesAfterLastUserCount = messages
             .Skip(lastUserMessageIndex + 1)
-            .Where(m => m.Role == ChatMessageRole.Assistant).Count();
+            .Where(m => m.Role == MessageRole.Assistant).Count();
         
         var isMaxTurnsReached = assistantMessagesAfterLastUserCount > MaxTurns;
         Console.WriteLine($"Is max turns reached: {isMaxTurnsReached}");
         return isMaxTurnsReached;
     }
 
-    public void addUserMessage(string userText)
+    public void AddUserMessage(string userText)
     {
-        var newMessage = new ChatMessage { Role = ChatMessageRole.User, Text = userText };
+        var newMessage = new UserMessage(userText) ;
         _appState.Messages.Add(newMessage);
         MessageAdded?.Invoke(this, newMessage);
     }
 
     public async Task ProcessLastUserMessageAsync(CancellationToken ct) {
         var tools = ToolsService.GetTools();
-        
-        ILlmResponse response;
+
         AssistantMessage assistantMessage;
 
         do {
-            response = await _openRouterService.CallModelAsync(_appState.Messages, tools);
+            var response = await _openRouterService.CallModelAsync(_appState.Messages, tools);
 
             assistantMessage = toAssistantMessage(response);
             _appState.Messages.Add(assistantMessage);
@@ -75,12 +74,19 @@ public class AgentService
     
     }
 
-    private void PrintMessageHistory(List<ChatMessage> messages)
+    private void PrintMessageHistory(List<Message> messages)
     {
         Console.WriteLine("=== Full Message History ===");
         foreach (var msg in messages)
         {
-            Console.WriteLine($"[{msg.Role}] {msg.Text}");
+            if (msg is UserMessage userMessage)
+            {
+                Console.WriteLine($"  User Message: {userMessage.Text}");
+            }
+            if (msg is SystemMessage systemMessage)
+            {
+                Console.WriteLine($"  System Message: {systemMessage.Text}");
+            }
             if (msg is AssistantMessage am && am.ToolCallRequests.Count > 0)
             {
                 foreach (var toolCall in am.ToolCallRequests)
@@ -115,9 +121,9 @@ public class AgentService
         };
     }
 
-    public List<ChatMessage> InitMessages()
+    public List<Message> InitMessages()
     {
-        var fileName = SourceCodeService.GetInspectedFilePath();
+        var fileName = SourceCodeService.GetInspectedFilePath(); //TODO fix string interpolation 
         var systemPrompt = """
         You are a helpful assistant that can help with debugging a program with LLDB debugger.
 
@@ -132,8 +138,8 @@ public class AgentService
 
         """.Replace("{MaxTurns}", MaxTurns.ToString()); //TODO maybe add a tool to call tools?
         
-        return new List<ChatMessage> {
-            new ChatMessage { Role = ChatMessageRole.System, Text = systemPrompt }
+        return new List<Message> {
+            new SystemMessage(systemPrompt)
         };
     }
 
