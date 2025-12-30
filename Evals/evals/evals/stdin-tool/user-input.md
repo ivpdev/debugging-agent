@@ -1,0 +1,1 @@
+make sure the program in running through. you don't need to debug it. the program will ask for input a few times - don't prompt the user for help - just guess the input yourself and use tools to submit it. after some turns the program will tell you if you won or lost. your goal is to reach this state

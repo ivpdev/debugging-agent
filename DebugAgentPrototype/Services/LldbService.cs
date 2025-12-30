@@ -28,8 +28,7 @@ public class LldbService
         _appState = appState;
     }
 
-    //TODO start on the app start, only use run tool to run
-    public async Task StartAsync(IReadOnlyList<Breakpoint> breakpoints, CancellationToken ct)
+    public async Task InitializeAsync(CancellationToken ct)
     {
         if (_isRunning)
         {
@@ -79,6 +78,16 @@ public class LldbService
         _lldbProcess.BeginErrorReadLine();
         _isRunning = true;
 
+        await Task.Delay(500, ct);
+    }
+
+    public async Task StartAsync(IReadOnlyList<Breakpoint> breakpoints, CancellationToken ct)
+    {
+        if (!_isRunning)
+        {
+            await InitializeAsync(ct);
+        }
+
         if (breakpoints.Count > 0)
         {
             await Task.Delay(500, ct);
@@ -88,7 +97,6 @@ public class LldbService
             }
         }
 
-        // Start the program
         await Task.Delay(500, ct);
         await SendCommandAsync("run", ct);
     }

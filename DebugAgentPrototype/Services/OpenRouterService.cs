@@ -37,10 +37,12 @@ public class OpenRouterService
 
         var requestBody = new
         {
-            model = "openai/gpt-4o-mini", // Default model, can be made configurable
+            model = "anthropic/claude-sonnet-4.5", 
             messages = FlattenMessages(messages.Select(toOpenRouterMessage)),
             tools = tools?.Select(toOpenRouterTool).ToList()
         };
+
+        Console.WriteLine($"[OpenRouter] Request body: {JsonSerializer.Serialize(requestBody)}");
 
         try
         {
@@ -77,7 +79,7 @@ public class OpenRouterService
         };
     }
 
-    private object toOpenRouterMessage(ChatMessage message) {
+    public object toOpenRouterMessage(ChatMessage message) {
         if (message is AssistantMessage assistantMsg)
         {
             var result = new Dictionary<string, object>

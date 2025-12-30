@@ -10,7 +10,7 @@ namespace DebugAgentPrototype.Services;
 
 public class AgentService
 {
-    private const int MaxTurns = 10;
+    private const int MaxTurns = 5;
     
     private readonly LldbService _lldbService;
     private readonly OpenRouterService _openRouterService;
@@ -115,12 +115,18 @@ public class AgentService
     public List<ChatMessage> InitMessages()
     {
         var systemPrompt = """
-        You are a helpful assistant that can help with debugging a program.
+        You are a helpful assistant that can help with debugging a program with LLDB debugger.
 
         You will have tools to help you accomplish the user's goals.
+
+        Sometimes the program will ask for input. You can use the stdin tool to provide input to the program. 
+        Provide the input in the format the program expects. For example if the program expects a number, you should provide a number without any other text.
+        The tool will return the output of the program after the input is provided.
+
+        
         You can call tools up to {MaxTurns} times before you respond to the user. 
 
-        """.Replace("{MaxTurns}", MaxTurns.ToString());
+        """.Replace("{MaxTurns}", MaxTurns.ToString()); //TODO maybe add a tool to call tools?
         
         return new List<ChatMessage> {
             new ChatMessage { Role = ChatMessageRole.System, Text = systemPrompt }

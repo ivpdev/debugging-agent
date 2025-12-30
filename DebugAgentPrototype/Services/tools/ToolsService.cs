@@ -14,6 +14,7 @@ public class ToolsService
     private readonly ToolRun _toolRun;
     private readonly ToolSetBreakpoint _toolSetBreakpoint;
     private readonly ToolGetSourceCode _toolGetSourceCode;
+    private readonly ToolStdin _toolStdin;
 
     public ToolsService(AppState appState, LldbService lldbService)
     {
@@ -22,6 +23,7 @@ public class ToolsService
         _toolRun = new ToolRun(_appState, _lldbService);
         _toolSetBreakpoint = new ToolSetBreakpoint(_appState, _lldbService);
         _toolGetSourceCode = new ToolGetSourceCode(_appState, _lldbService);
+        _toolStdin = new ToolStdin(_appState, _lldbService);
     }
 
     public static List<ToolConfig> GetTools()
@@ -31,7 +33,7 @@ public class ToolsService
             ToolRun.GetConfig(),
             ToolSetBreakpoint.GetConfig(),
             ToolGetSourceCode.GetConfig(),
-            new ToolConfig("continue", "Continue the execution of the program", new { type = "object", properties = new { } })
+            ToolStdin.GetConfig()
             };
     }
 
@@ -49,9 +51,10 @@ public class ToolsService
             case "get_source_code":
                 result = _toolGetSourceCode.CallAsync(ct);
                 break;
-            case "continue":
-                result = "Execution continued";
+            case "stdin_write":
+                result = await _toolStdin.CallAsync(toolCallRequest.Arguments, ct);
                 break;
+            
             default:
                 throw new Exception($"Tool {toolCallRequest.Name} not found");
         }

@@ -20,6 +20,55 @@ public class EvalService
         _openRouterService = openRouterService;
     }
 
+    public async Task RunEvalAsync(string evalName, CancellationToken ct = default)
+    {
+        var evalsPath = FindEvalsDirectory();
+        if (evalsPath == null)
+        {
+            Console.WriteLine("Evals directory not found. Searched in:");
+            Console.WriteLine($"  - {Path.Combine(Directory.GetCurrentDirectory(), EvalsBasePath)}");
+            Console.WriteLine($"  - {Path.Combine(Directory.GetCurrentDirectory(), "DebugAgentPrototype", EvalsBasePath)}");
+            return;
+        }
+
+        var evalFolder = Path.Combine(evalsPath, evalName);
+        if (!Directory.Exists(evalFolder))
+        {
+            Console.WriteLine($"Eval '{evalName}' not found in {evalsPath}");
+            Console.WriteLine("Available evals:");
+            var availableEvals = Directory.GetDirectories(evalsPath);
+            foreach (var eval in availableEvals)
+            {
+                Console.WriteLine($"  - {Path.GetFileName(eval)}");
+            }
+            return;
+        }
+
+        Console.WriteLine($"\n=== Running eval: {evalName} ===");
+        
+        try
+        {
+            await RunEvalFromFolderAsync(evalFolder, ct);
+            var resultPath = Path.Combine(evalFolder, "result.md");
+            if (File.Exists(resultPath))
+            {
+                var resultContent = await File.ReadAllTextAsync(resultPath, ct);
+                var status = resultContent.TrimStart().StartsWith("PASS", StringComparison.OrdinalIgnoreCase) ? "PASS" : "FAIL";
+                Console.WriteLine($"\n=== Result: {status} ===");
+            }
+            else
+            {
+                Console.WriteLine("\n=== Result: FAIL ===");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error running eval {evalName}: {ex.Message}");
+            await WriteResultAsync(evalFolder, $"FAIL\n\nError during evaluation: {ex.Message}");
+            Console.WriteLine("\n=== Result: FAIL ===");
+        }
+    }
+
     public async Task RunAllEvalsAsync(CancellationToken ct = default)
     {
         var evalsPath = FindEvalsDirectory();
@@ -43,7 +92,7 @@ public class EvalService
             
             try
             {
-                await RunEvalAsync(evalFolder, ct);
+                await RunEvalFromFolderAsync(evalFolder, ct);
                 var resultPath = Path.Combine(evalFolder, "result.md");
                 if (File.Exists(resultPath))
                 {
@@ -71,7 +120,7 @@ public class EvalService
         }
     }
 
-    private async Task RunEvalAsync(string evalFolder, CancellationToken ct)
+    private async Task RunEvalFromFolderAsync(string evalFolder, CancellationToken ct)
     {
         var userInputPath = Path.Combine(evalFolder, "user-input.md");
         var expectedPath = Path.Combine(evalFolder, "expected.md");
@@ -96,6 +145,7 @@ public class EvalService
 
         var appState = new AppState();
         var lldbService = new LldbService(appState);
+        await lldbService.InitializeAsync(ct);
         var toolsService = new ToolsService(appState, lldbService);
         var agentService = new AgentService(lldbService, _openRouterService, appState, toolsService);
 

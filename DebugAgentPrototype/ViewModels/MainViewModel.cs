@@ -51,6 +51,22 @@ public class MainViewModel : ReactiveObject
             canSend);
     }
 
+    public async Task InitializeLldbAsync()
+    {
+        try
+        {
+            await _lldbService.InitializeAsync(CancellationToken.None);
+            Dispatcher.UIThread.Post(() =>
+            {
+                LldbOutputViewModel.UpdateRunningState();
+            });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[MainViewModel] Error initializing LLDB: {ex.Message}");
+        }
+    }
+
     public string UserInput
     {
         get => _userInput;

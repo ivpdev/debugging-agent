@@ -25,7 +25,15 @@ class Program
 
         try
         {
-            await evalService.RunAllEvalsAsync(cts.Token);
+            if (args.Length > 0 && !string.IsNullOrWhiteSpace(args[0]))
+            {
+                var evalName = args[0].Trim();
+                await evalService.RunEvalAsync(evalName, cts.Token);
+            }
+            else
+            {
+                await evalService.RunAllEvalsAsync(cts.Token);
+            }
         }
         catch (OperationCanceledException)
         {
