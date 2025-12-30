@@ -27,22 +27,23 @@ public class MainViewModel : ReactiveObject
     public ObservableCollection<UIMessage> UIMessages { get; }
     public LldbOutputViewModel LldbOutputViewModel { get; }
 
-    public MainViewModel()
+    public MainViewModel(
+        AgentService agentService,
+        AppState appState,
+        LldbService lldbService,
+        LldbOutputViewModel lldbOutputViewModel)
     {
-        _appState = new AppState();
-        _lldbService = new LldbService(_appState);
-        var openRouterService = new OpenRouterService();
-        var toolsService = new ToolsService(_appState, _lldbService);
-        _agentService = new AgentService(_lldbService, openRouterService, _appState, toolsService);
+        _agentService = agentService;
+        _appState = appState;
+        _lldbService = lldbService;
+        LldbOutputViewModel = lldbOutputViewModel;
 
         _appState.Messages = _agentService.InitMessages();
 
         UIMessages = new ObservableCollection<UIMessage>();
-        LldbOutputViewModel = new LldbOutputViewModel(_lldbService, _appState);
 
         _agentService.MessageAdded += OnMessageAdded;
 
-        // SendMessageCommand is enabled when not busy and user input is not empty
         var canSend = this.WhenAnyValue(
             x => x.IsBusy,
             x => x.UserInput,
