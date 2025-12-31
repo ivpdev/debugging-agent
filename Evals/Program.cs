@@ -12,8 +12,7 @@ class Program
     {
         LoadEnvironmentFile();
         
-        var openRouterService = new OpenRouterService();
-        var evalService = new EvalService(openRouterService);
+        var evalService = new EvalService();
 
         try
         {

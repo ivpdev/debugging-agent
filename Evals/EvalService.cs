@@ -33,15 +33,20 @@ public class EvalService
         public readonly string Judgement = judgement;
     }
 
-    private readonly OpenRouterService _openRouterService;
-    private readonly AppState _appState;
-    private readonly LldbService _lldbService;
-    private readonly AgentService _agentService;
+    private OpenRouterService _openRouterService;
+    private AppState _appState;
+    private LldbService _lldbService;
+    private AgentService _agentService;
     private const string EvalsBasePath = "evals/evals";
 
-    public EvalService(OpenRouterService openRouterService)
+    public EvalService()
     {
-        _openRouterService = openRouterService;
+        InitAssistantHeadless();
+    }
+
+    private void InitAssistantHeadless()
+    {
+        _openRouterService = new OpenRouterService();
         _appState = new AppState();
         _lldbService = new LldbService(_appState);
         var toolsService = new ToolsService(_appState, _lldbService);
@@ -59,6 +64,7 @@ public class EvalService
         }));
 
         await WriteToFileSystemAsync(evals);
+        PrintResults(evals);
     }
 
     public async Task RunEvalByNameAsync(string evalName)
@@ -84,6 +90,7 @@ public class EvalService
 
     private async Task<List<Message>> GenerateConversationAsync(string userMessage)
     {
+        InitAssistantHeadless();
         await _lldbService.InitializeAsync();
         _appState.Messages = _agentService.InitMessages();
         _agentService.AddUserMessage(userMessage);
@@ -166,7 +173,6 @@ public class EvalService
         await File.WriteAllTextAsync(chatHistoryPath, ToJsonString(eval.Result.Conversation));
         await File.WriteAllTextAsync(resultPath, eval.Result.Judgement);
      }
-
 
 private string GetEvalsDirectory()
     {
@@ -259,5 +265,16 @@ private string GetEvalsDirectory()
         }
 
         return baseMessage;
+    }
+
+    private void PrintResults(Eval[] evals)
+    {
+        foreach (var eval in evals)
+        {
+            var judgement = eval.Result.Judgement;
+            var passed = judgement.StartsWith("PASS", StringComparison.OrdinalIgnoreCase);
+            var status = passed ? "PASSED" : "FAILED";
+            Console.WriteLine($"{status} {eval.Definition.Name}");
+        }
     }
 }
