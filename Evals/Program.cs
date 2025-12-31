@@ -20,7 +20,7 @@ class Program
             if (args.Length > 0 && !string.IsNullOrWhiteSpace(args[0]))
             {
                 var evalName = args[0].Trim();
-                await evalService.RunEvalAsync(evalName);
+                await evalService.RunEvalByNameAsync(evalName);
             }
             else
             {

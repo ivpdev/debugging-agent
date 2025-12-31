@@ -18,3 +18,5 @@ Do not add comments unless absolutely necessary.
 Prefer `const` over `var`. Use `var` only if the variable must be reassigned later.
 
 Only make changes directly related to the current task. Do not fix or refactor unrelated code in files you touch.
+
+Don't suggest adding writing to console unless asked
