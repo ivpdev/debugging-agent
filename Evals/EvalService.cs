@@ -127,11 +127,7 @@ public class EvalService
     private async Task<List<EvalDefinition>> ReadEvalDefinitionsAsync()
     {
         var evalDefinitions = new List<EvalDefinition>();
-        var evalsPath = FindEvalsDirectory();
-        if (evalsPath == null)
-        {
-            throw new Exception("Evals directory not found");
-        }
+        var evalsPath = GetEvalsDirectory();
 
         var evalFolders = Directory.GetDirectories(evalsPath);
         foreach (var evalFolder in evalFolders)
@@ -155,7 +151,7 @@ public class EvalService
     
     private async Task WriteToFileSystemAsync(Eval[] evals)
     {
-        var evalsPath = FindEvalsDirectory();
+        var evalsPath = GetEvalsDirectory();
 
         foreach (var eval in evals)
         {
@@ -169,30 +165,18 @@ public class EvalService
         var resultPath = Path.Combine(evalFolder, "result.md");
         await File.WriteAllTextAsync(chatHistoryPath, ToJsonString(eval.Result.Conversation));
         await File.WriteAllTextAsync(resultPath, eval.Result.Judgement);
-
      }
 
 
-private string? FindEvalsDirectory()
+private string GetEvalsDirectory()
     {
-        var possiblePaths = new[]
+        var path = Path.Combine(Directory.GetCurrentDirectory(), EvalsBasePath);
+        var fullPath = Path.GetFullPath(path);
+        if (!Directory.Exists(fullPath))
         {
-            // Running from project root: {current directory}/evals/evals
-            Path.Combine(Directory.GetCurrentDirectory(), EvalsBasePath),
-            // Running from project root with Evals subdirectory: {current directory}/Evals/evals/evals
-            Path.Combine(Directory.GetCurrentDirectory(), "Evals", EvalsBasePath)
-        };
-
-        foreach (var path in possiblePaths)
-        {
-            var fullPath = Path.GetFullPath(path);
-            if (Directory.Exists(fullPath))
-            {
-                return fullPath;
-            }
+            throw new Exception("Evals directory not found");
         }
-
-        return null;
+        return fullPath;
     }
 
     private string ToString(List<Message> conversationForEvaluation)
