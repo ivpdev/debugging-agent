@@ -82,12 +82,9 @@ public class EvalService
         return new EvalResult(conversation, conversationForEvaluation, judgement);
     }
 
-
-
     private async Task<List<Message>> GenerateConversationAsync(string userMessage)
     {
         await _lldbService.InitializeAsync();
-
         _appState.Messages = _agentService.InitMessages();
         _agentService.AddUserMessage(userMessage);
         await _agentService.ProcessLastUserMessageAsync();
@@ -97,28 +94,6 @@ public class EvalService
     private List<Message> CleanConversationForEvaluation(List<Message> conversation)
     {
         return conversation.Where(m => m.Role != MessageRole.System).ToList();
-    }
-
-    private async Task<List<EvalDefinition>> ReadEvalDefinitionsAsync()
-    {
-        var evalDefinitions = new List<EvalDefinition>();
-        var evalsPath = FindEvalsDirectory();
-        if (evalsPath == null)
-        {
-            return evalDefinitions;
-        }
-
-        var evalFolders = Directory.GetDirectories(evalsPath);
-        foreach (var evalFolder in evalFolders)
-        {
-            var evalName = Path.GetFileName(evalFolder);
-            var userInput = await File.ReadAllTextAsync(Path.Combine(evalFolder, "user-input.md"));
-            var expected = await File.ReadAllTextAsync(Path.Combine(evalFolder, "expected.md"));
-            var evalDefinition = new EvalDefinition(evalName, userInput, expected);
-            evalDefinitions.Add(evalDefinition);
-        }
-
-        return evalDefinitions;
     }
 
     private async Task<string> EvaluateConversationAsync(List<Message> conversationForEvaluation,
@@ -149,20 +124,26 @@ public class EvalService
                 Your response must start with PASS or FAIL. If FAIL, provide reasoning on a new line.";
     }
 
-    private string ToString(List<Message> conversationForEvaluation)
+    private async Task<List<EvalDefinition>> ReadEvalDefinitionsAsync()
     {
-        var sb = new StringBuilder();
-        foreach (var message in conversationForEvaluation)
+        var evalDefinitions = new List<EvalDefinition>();
+        var evalsPath = FindEvalsDirectory();
+        if (evalsPath == null)
         {
-            sb.AppendLine(ToString(message));
+            throw new Exception("Evals directory not found");
         }
 
-        return sb.ToString();
-    }
+        var evalFolders = Directory.GetDirectories(evalsPath);
+        foreach (var evalFolder in evalFolders)
+        {
+            var evalName = Path.GetFileName(evalFolder);
+            var userInput = await File.ReadAllTextAsync(Path.Combine(evalFolder, "user-input.md"));
+            var expected = await File.ReadAllTextAsync(Path.Combine(evalFolder, "expected.md"));
+            var evalDefinition = new EvalDefinition(evalName, userInput, expected);
+            evalDefinitions.Add(evalDefinition);
+        }
 
-    private string ToString(Message message)
-    {
-        return ToJsonString(SerializeMessage(message));
+        return evalDefinitions;
     }
 
     private async Task<EvalDefinition?> ReadEvalDefinitionByNameAsync(string evalName)
@@ -171,6 +152,7 @@ public class EvalService
         return evalDefinitions.FirstOrDefault(e => e.Name == evalName);
     }
 
+    
     private async Task WriteToFileSystemAsync(Eval[] evals)
     {
         var evalsPath = FindEvalsDirectory();
@@ -195,12 +177,10 @@ private string? FindEvalsDirectory()
     {
         var possiblePaths = new[]
         {
+            // Running from project root: {current directory}/evals/evals
             Path.Combine(Directory.GetCurrentDirectory(), EvalsBasePath),
-            Path.Combine(Directory.GetCurrentDirectory(), "Evals", EvalsBasePath),
-            Path.Combine(Directory.GetCurrentDirectory(), "DebugAgentPrototype", EvalsBasePath),
-            Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", EvalsBasePath),
-            Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "Evals", EvalsBasePath),
-            Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "DebugAgentPrototype", EvalsBasePath)
+            // Running from project root with Evals subdirectory: {current directory}/Evals/evals/evals
+            Path.Combine(Directory.GetCurrentDirectory(), "Evals", EvalsBasePath)
         };
 
         foreach (var path in possiblePaths)
@@ -213,6 +193,22 @@ private string? FindEvalsDirectory()
         }
 
         return null;
+    }
+
+    private string ToString(List<Message> conversationForEvaluation)
+    {
+        var sb = new StringBuilder();
+        foreach (var message in conversationForEvaluation)
+        {
+            sb.AppendLine(ToString(message));
+        }
+
+        return sb.ToString();
+    }
+
+    private string ToString(Message message)
+    {
+        return ToJsonString(SerializeMessage(message));
     }
 
     private string ToJsonString(object obj)
