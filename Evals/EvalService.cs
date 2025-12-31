@@ -10,29 +10,29 @@ using DebugAgentPrototype.Services;
 
 namespace Evals;
 
-public class Eval(EvalDefinition definition, EvalResult result)
-{
-    public readonly EvalDefinition Definition = definition;
-    public readonly EvalResult Result = result;
-}
-
-public class EvalDefinition(string name, string userInput, string expected)
-{
-    public readonly string Name = name;
-    public readonly string UserInput = userInput;
-    public readonly string Expected = expected;
-}
-
-public class EvalResult(List<Message> conversation, List<Message> conversationForEvaluation, string judgement)
-{
-    public readonly List<Message> Conversation = conversation;
-    //convesation without the information the evalator is not allowed to know (e.g. the system prompt)
-    public readonly List<Message> ConversationForEvaluation = conversationForEvaluation;
-    public readonly string Judgement = judgement;
-}
-
 public class EvalService
 {
+    private class Eval(EvalDefinition definition, EvalResult result)
+    {
+        public readonly EvalDefinition Definition = definition;
+        public readonly EvalResult Result = result;
+    }
+
+    private class EvalDefinition(string name, string userInput, string expected)
+    {
+        public readonly string Name = name;
+        public readonly string UserInput = userInput;
+        public readonly string Expected = expected;
+    }
+
+    private class EvalResult(List<Message> conversation, List<Message> conversationForEvaluation, string judgement)
+    {
+        public readonly List<Message> Conversation = conversation;
+        //convesation without the information the evalator is not allowed to know (e.g. the system prompt)
+        public readonly List<Message> ConversationForEvaluation = conversationForEvaluation;
+        public readonly string Judgement = judgement;
+    }
+
     private readonly OpenRouterService _openRouterService;
     private readonly AppState _appState;
     private readonly LldbService _lldbService;
@@ -277,4 +277,3 @@ private string? FindEvalsDirectory()
         return baseMessage;
     }
 }
-
