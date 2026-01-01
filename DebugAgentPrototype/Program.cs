@@ -8,9 +8,6 @@ namespace DebugAgentPrototype;
 
 class Program
 {
-    // Initialization code. Don't use any Avalonia, third-party APIs or any
-    // SynchronizationContext-reliant code before AppMain is called: things aren't initialized
-    // yet and stuff might break.
     [STAThread]
     public static void Main(string[] args)
     {
@@ -21,7 +18,6 @@ class Program
 
     private static void LoadEnvironmentFile()
     {
-        // Load .env file - try multiple locations
         var possiblePaths = new[]
         {
             // Project root (4 levels up from bin/Debug/net9.0/)
