@@ -34,25 +34,22 @@ public class EvalService
         public readonly string Judgement = judgement;
     }
 
-    private OpenRouterService _openRouterService;
-    private AppState _appState;
-    private LldbService _lldbService;
-    private AgentService _agentService;
     private const string EvalsBasePath = "evals/evals";
 
     public EvalService()
     {
     }
 
-    private async Task InitAssistantHeadless()
+    private async Task<(OpenRouterService openRouterService, AppState appState, LldbService lldbService, AgentService agentService)> InitAssistantHeadless()
     {
-        _openRouterService = new OpenRouterService();
-        _appState = new AppState();
-        _lldbService = new LldbService(_appState);
-        var toolsService = new ToolsService(_appState, _lldbService);
-        _agentService = new AgentService(_openRouterService, _appState, toolsService);
-        await _lldbService.InitializeAsync();
-        _appState.Messages = AgentService.InitMessages();
+        var openRouterService = new OpenRouterService();
+        var appState = new AppState();
+        var lldbService = new LldbService(appState);
+        var toolsService = new ToolsService(appState, lldbService);
+        var agentService = new AgentService(openRouterService, appState, toolsService);
+        await lldbService.InitializeAsync();
+        appState.Messages = AgentService.InitMessages();
+        return (openRouterService, appState, lldbService, agentService);
     }
 
     public async Task RunAllEvalsAsync()
@@ -93,11 +90,11 @@ public class EvalService
 
     private async Task<List<Message>> GenerateConversationAsync(string userMessage)
     {
-        await InitAssistantHeadless();
+        var (openRouterService, appState, lldbService, agentService) = await InitAssistantHeadless();
         
-        _agentService.AddUserMessage(userMessage);
-        await _agentService.ProcessLastUserMessageAsync();
-        return _appState.Messages;
+        agentService.AddUserMessage(userMessage);
+        await agentService.ProcessLastUserMessageAsync();
+        return appState.Messages;
     }
 
     private List<Message> CleanConversationForEvaluation(List<Message> conversation)
@@ -109,29 +106,30 @@ public class EvalService
     private async Task<string> EvaluateConversationAsync(List<Message> conversationForEvaluation,
         string expectedCriteria)
     {
+        var openRouterService = new OpenRouterService();
         var judgePrompt = BuildJudgePrompt(conversationForEvaluation, expectedCriteria);
         var judgeMessages = new List<Message>
         {
             new SystemMessage(
-                "You are an evaluation judge. Analyze the chat history and determine if the evaluation criteria are met. Your response must start with either PASS or FAIL. If FAIL, provide reasoning on a new line."),
+                @"You are an evaluation judge. 
+                Analyze the chat history and determine if the evaluation criteria are met. 
+                Evaluate only what is explicitly stated in the criteria, don't assume anything.
+Your response must start with either PASS or FAIL. Provide reasoning on a new line."),
             new UserMessage(judgePrompt)
         };
 
-        var response = await _openRouterService.CallModelAsync(judgeMessages, null);
+        var response = await openRouterService.CallModelAsync(judgeMessages, null);
         return response.Content ?? "FAIL\n\nJudge did not return a response";
     }
 
     private string BuildJudgePrompt(List<Message> conversationForEvaluation, string expectedCriteria)
     {
-        return $@"Evaluate the following chat history against the criteria:
-
+        return $@"
                 ## Expected Criteria:
                 {expectedCriteria}
 
                 ## Chat History:
-                {ToString(conversationForEvaluation)}
-
-                Your response must start with PASS or FAIL. Provide reasoning on a new line.";
+                {ToString(conversationForEvaluation)}";
     }
 
     private async Task<List<EvalDefinition>> ReadEvalDefinitionsAsync()
