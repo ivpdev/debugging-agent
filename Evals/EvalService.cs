@@ -45,7 +45,7 @@ public class EvalService
         var appState = new AppState();
         var lldbService = new LldbService(appState);
         var toolsService = new ToolsService(appState, lldbService);
-        var agentService = new AgentService(openRouterService, appState, toolsService);
+        var agentService = new AgentService(openRouterService, appState, toolsService, lldbService);
         await lldbService.InitializeAsync();
         appState.Messages = AgentService.InitMessages();
         return (openRouterService, appState, lldbService, agentService);
@@ -118,7 +118,7 @@ Your response must start with either PASS or FAIL. Provide reasoning on a new li
         };
 
         var response = await openRouterService.CallModelAsync(judgeMessages, null);
-        return response.Content ?? "FAIL\n\nJudge did not return a response";
+        return response.Text ?? "FAIL\n\nJudge did not return a response";
     }
 
     private string BuildJudgePrompt(List<Message> conversationForEvaluation, string expectedCriteria)
@@ -236,9 +236,9 @@ private string GetEvalsDirectory()
             var tc = toolMsg.ToolCall;
             var toolCallDict = new Dictionary<string, object>
             {
-                ["Id"] = tc.Id,
-                ["Name"] = tc.Name,
-                ["Arguments"] = tc.Arguments
+                ["Id"] = tc.Request.Id,
+                ["Name"] = tc.Request.Name,
+                ["Arguments"] = tc.Request.Arguments
             };
             
             if (tc.Result != null)
