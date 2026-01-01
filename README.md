@@ -4,30 +4,7 @@
 
 ## Prerequisites
 
-### Installing lldb
-
-**On macOS:**
-lldb comes with Xcode Command Line Tools. Install or verify installation:
-```bash
-xcode-select --install
-```
-
-Verify installation:
-```bash
-lldb --version
-```
-
-**On Linux:**
-```bash
-# Ubuntu/Debian
-sudo apt-get install lldb
-
-# Fedora/RHEL
-sudo dnf install lldb
-```
-
-**On Windows:**
-lldb is included with Visual Studio, or you can install the LLVM toolchain separately.
+lldb is installed an available in the command line.
 
 ## Running Application
 
