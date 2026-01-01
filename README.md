@@ -1,5 +1,7 @@
 # Debug Agent Prototype
 
+> **IMPORTANT** The code is not meant to be production-ready. The intention of this prototype is to show the solution design. Technical aspects like handling or edge cases, proper error handling, logging etc. were omitted for sake of readability.
+
 ## Prerequisites
 
 ### Installing lldb
