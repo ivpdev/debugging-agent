@@ -16,11 +16,11 @@
                    Text="LLDB Output" 
                    FontWeight="Bold" 
                    FontSize="14" 
-                   Margin="10,10,10,10"/>
+                   Margin="0,0,0,10"/>
         <Border Grid.Row="1" 
                 Background="Black"
                 BorderThickness="0"
-                Margin="10,0,10,10">
+                Margin="0,0,0,10">
             <ScrollViewer x:Name="LldbOutputScrollViewer"
                           VerticalScrollBarVisibility="Auto"
                           HorizontalScrollBarVisibility="Auto">
@@ -36,7 +36,7 @@
                          Focusable="False"/>
             </ScrollViewer>
         </Border>
-        <Grid Grid.Row="2" Margin="10,0,10,10">
+        <Grid Grid.Row="2" Margin="0,0,0,0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>

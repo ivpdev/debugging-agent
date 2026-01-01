@@ -22,7 +22,7 @@
             <TextBox x:Name="UserInputBox"
                      Grid.Column="0" 
                      Text="{Binding UserInput, Mode=TwoWay}" 
-                     Watermark="Type a message..."
+                     Watermark="Type a message for the assistant..."
                      Margin="0,0,10,0"
                      KeyDown="OnUserInputKeyDown"/>
             <Button Grid.Column="1" 

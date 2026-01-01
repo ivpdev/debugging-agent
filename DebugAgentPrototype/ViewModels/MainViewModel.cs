@@ -13,6 +13,7 @@ public class MainViewModel : ReactiveObject
 
     public LldbOutputViewModel LldbOutputViewModel { get; }
     public ChatViewModel ChatViewModel { get; }
+    public string DebuggedFileName { get; }
 
     public MainViewModel(
         AgentService agentService,
@@ -24,6 +25,7 @@ public class MainViewModel : ReactiveObject
         _lldbService = lldbService;
         LldbOutputViewModel = lldbOutputViewModel;
         ChatViewModel = chatViewModel;
+        DebuggedFileName = SourceCodeService.GetInpectedFileName();
 
         appState.Messages = AgentService.InitMessages();
     }

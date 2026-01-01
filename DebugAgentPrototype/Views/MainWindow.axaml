@@ -9,14 +9,33 @@
         x:DataType="vm:MainViewModel"
         Title="AI-Assisted Debugger"
         Width="1000" Height="600">
-    <Grid ColumnDefinitions="3*,2*" RowDefinitions="*,Auto">
+    <Grid ColumnDefinitions="3*,2*" RowDefinitions="Auto,*,Auto">
+        <!-- Header: Debugging file name -->
+        <TextBlock Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="0" 
+                   Text="{Binding DebuggedFileName, StringFormat='debugging the file &quot;{0}&quot;'}"
+                   FontSize="14" 
+                   Margin="10,10,10,0" VerticalAlignment="Center"/>
+        
         <!-- Left Column: LLDB Output -->
-        <Border Grid.Column="0" Grid.Row="0" BorderBrush="Gray" BorderThickness="1" Margin="10,10,0,10">
+        <Border Grid.Column="0" Grid.Row="1" BorderBrush="Gray" BorderThickness="1" Margin="10,10,0,10" Padding="10">
             <views:LldbOutputView DataContext="{Binding LldbOutputViewModel}"/>
         </Border>
         
         <!-- Right Column: Chat -->
-        <views:ChatView Grid.Column="1" Grid.Row="0" DataContext="{Binding ChatViewModel}" Margin="10"/>
+        <Border Grid.Column="1" Grid.Row="1" BorderBrush="Gray" BorderThickness="1" Margin="10,10,10,10" Padding="10">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <TextBlock Grid.Row="0" 
+                           Text="AI Assistant" 
+                           FontSize="14" 
+                           FontWeight="Bold" 
+                           Margin="0,0,0,10"/>
+                <views:ChatView Grid.Row="1" DataContext="{Binding ChatViewModel}"/>
+            </Grid>
+        </Border>
     </Grid>
 </Window>
 

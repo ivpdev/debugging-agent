@@ -43,6 +43,11 @@ public class SourceCodeService
         return gamePath;
     }
 
+    public static string GetInpectedFileName()
+    {
+        return Path.GetFileName(GetInspectedFilePath());
+    }
+
     private static string PrefixLineNumbers(string content)
     {
         return string.Join("\n", content.Split('\n').Select((line, index) => $"{index + 1}: {line}"));
