@@ -4,7 +4,6 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using DebugAgentPrototype.Models;
 using DebugAgentPrototype.Services;
-using DebugAgentPrototype.Services.tools;
 using DebugAgentPrototype.ViewModels;
 using DebugAgentPrototype.Views;
 using Microsoft.Extensions.DependencyInjection;

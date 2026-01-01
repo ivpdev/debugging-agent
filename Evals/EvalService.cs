@@ -7,7 +7,6 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using DebugAgentPrototype.Models;
 using DebugAgentPrototype.Services;
-using DebugAgentPrototype.Services.tools;
 
 namespace Evals;
 

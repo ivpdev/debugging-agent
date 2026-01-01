@@ -2,8 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using DebugAgentPrototype.Models;
+using DebugAgentPrototype.Services.tools;
 
-namespace DebugAgentPrototype.Services.tools;
+namespace DebugAgentPrototype.Services;
 
 public class ToolsService(AppState appState, LldbService lldbService)
 {
@@ -46,12 +47,4 @@ public class ToolsService(AppState appState, LldbService lldbService)
         }
         return toolCalls;
     }
-}
-
-//TODO move to models
-public class ToolConfig(string name, string description, object parameters)
-{
-    public string Name { get; } = name;
-    public string? Description { get; } = description;
-    public object Parameters { get; } = parameters;
 }

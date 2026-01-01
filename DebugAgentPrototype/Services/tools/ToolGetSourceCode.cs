@@ -1,3 +1,5 @@
+using DebugAgentPrototype.Models;
+
 namespace DebugAgentPrototype.Services.tools;
 
 public class ToolGetSourceCode

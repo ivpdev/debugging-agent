@@ -7,7 +7,14 @@ public class ToolCallRequest {
 }
 
 public class ToolCall {
-    public ToolCallRequest Request { get; init; }
+    public ToolCallRequest Request { get; init; } = null!;
     public object? Result { get; init; }
+}
+
+public class ToolConfig(string name, string description, object parameters)
+{
+    public string Name { get; } = name;
+    public string? Description { get; } = description;
+    public object Parameters { get; } = parameters;
 }
 

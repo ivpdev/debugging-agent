@@ -2,16 +2,17 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Text.Json;
 using System.Threading.Tasks;
 using DebugAgentPrototype.Models;
-using DebugAgentPrototype.Services.tools;
 
 namespace DebugAgentPrototype.Services;
 
 public class AgentService(
     OpenRouterService openRouterService,
     AppState appState,
-    ToolsService toolsService)
+    ToolsService toolsService,
+    LldbService lldbService)
 {
     private const int ToolCallLoopMaxTurns = 10;
 
@@ -44,24 +45,52 @@ public class AgentService(
 
     public async Task SendUserLldbCommandAsync(string command)
     {
-        /*_lldbService.SendCommandAsync(command);
+        await lldbService.SendCommandAsync(command);
         await Task.Delay(500);
-        var lldbOutput = await _lldbService.GetOutputAsync();
+        var lldbOutput = appState.LldbOutput;
 
         registerUserLldbCommand(command, lldbOutput);
-        //TODO user call the lldb service
-        //TODO register user LLbd*/
     }
 
     private void registerUserLldbCommand(string command, string lldbOutput)
     {
+        var toolCallId = addUserMessageLldbCommand(command);
+        addMessageUserLldbCommandResult(toolCallId, lldbOutput);
+    }
+
+    private string addUserMessageLldbCommand(string command)
+    {
+        var toolCallId = "user_stdin_write_" + Guid.NewGuid().ToString();
         var UserMessage = new UserMessage(command, [new ToolCallRequest
         {
-            Id = "user_stdin_write_" + Guid.NewGuid().ToString(),
-            Name = "lldb",
-            Arguments = lldbOutput
+            Id = toolCallId,
+            Name = "stdin_write",
+            Arguments = JsonSerializer.Serialize(new { text = command })
         }]);
+        
+        appState.Messages.Add(UserMessage);
+        MessageAdded?.Invoke(this, UserMessage);
+        return toolCallId;
+    }
 
+    private void addMessageUserLldbCommandResult(string toolCallId, string lldbOutput)
+    {
+        var toolCallRequest = new ToolCallRequest
+        {
+            Id = toolCallId,
+            Name = "stdin_write",
+            Arguments = ""
+        };
+        
+        var toolCall = new ToolCall
+        {
+            Request = toolCallRequest,
+            Result = lldbOutput
+        };
+        
+        var toolCallMessage = new ToolCallMessage(toolCall);
+        appState.Messages.Add(toolCallMessage);
+        MessageAdded?.Invoke(this, toolCallMessage);
     }
 
     public async Task ProcessLastUserMessageAsync() {
@@ -78,7 +107,7 @@ public class AgentService(
             
             if (assistantMessage.ToolCallRequests.Count > 0) {
                 var toolCalls = await toolsService.CallToolsAsync(assistantMessage.ToolCallRequests);
-                var toolCallMessages = toolCalls.Select(tc  => new ToolCallMessage(tc)).ToList();
+                var toolCallMessages = toolCalls.Select(toolCall => new ToolCallMessage(toolCall)).ToList();
                 foreach (var toolCallMessage in toolCallMessages)
                 {
                     appState.Messages.Add(toolCallMessage);

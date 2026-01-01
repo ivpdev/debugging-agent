@@ -9,7 +9,6 @@ using System.Threading.Tasks;
 using Avalonia.Threading;
 using DebugAgentPrototype.Models;
 using DebugAgentPrototype.Services;
-using DebugAgentPrototype.Services.tools;
 using ReactiveUI;
 
 namespace DebugAgentPrototype.ViewModels;
