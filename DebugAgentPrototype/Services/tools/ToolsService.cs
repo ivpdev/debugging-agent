@@ -8,23 +8,25 @@ namespace DebugAgentPrototype.Services.tools;
 public class ToolsService(AppState appState, LldbService lldbService)
 {
     private readonly ToolStdinWrite _toolStdinWrite = new(appState, lldbService);
+    private readonly ToolSetBreakpoint _toolSetBreakpoint = new(appState, lldbService);
 
     public static List<ToolConfig> GetTools()
     {
         return
         [
             ToolGetSourceCode.GetConfig(),
-            ToolStdinWrite.GetConfig()
+            ToolStdinWrite.GetConfig(),
+           // ToolSetBreakpoint.GetConfig()
         ];
     }
 
-    //TODO add set breakpoint tool
     private async Task<ToolCall> CallToolAsync(ToolCallRequest toolCallRequest)
     {
         object? result = toolCallRequest.Name switch
         {
             "get_source_code" => ToolGetSourceCode.CallAsync(),
             "stdin_write" => await _toolStdinWrite.CallAsync(toolCallRequest.Arguments),
+            "set_breakpoint" => await _toolSetBreakpoint.CallAsync(toolCallRequest.Arguments),
             _ => throw new Exception($"Tool {toolCallRequest.Name} not found")
         };
 

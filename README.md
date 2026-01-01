@@ -22,5 +22,5 @@ cd Evals
 dotnet run set-breakpoint
 ```
 
-Results are written to `Evals/evals/evals/<eval-name>/result.md` and `chat-history.json`.
+Results are written to `Evals/evals/evals/<eval-name>/result.md` and `conversation-for-evaluation.json`.
 

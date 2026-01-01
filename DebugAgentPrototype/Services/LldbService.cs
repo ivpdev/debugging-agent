@@ -14,6 +14,7 @@ public class LldbService(AppState appState)
     private Process? _lldbProcess;
     private StreamWriter? _lldbInput;
     private readonly StringBuilder _outputBuffer = new();
+    private readonly object _outputLock = new object();
 
     public event EventHandler<string>? OutputReceived;
 
@@ -79,8 +80,11 @@ public class LldbService(AppState appState)
 
     private void OnOutputReceived(string output)
     {
-        _outputBuffer.AppendLine(output);
-        appState.LldbOutput = _outputBuffer.ToString();
+        lock (_outputLock)
+        {
+            _outputBuffer.AppendLine(output);
+            appState.LldbOutput = _outputBuffer.ToString();
+        }
 
         OutputReceived?.Invoke(this, output);
     }

@@ -1,13 +1,12 @@
 
-all breakpoins are set by command "breakpoint set --file game.c --line <line>"
-
 The following actions should be made
 
-- to inspect which number was assigned at the beginning: set breakpoint at line 21
-- to inspect number entered by user in every iteration: set breakpoint at some line between 30 and 65
-- run the program
-- inspect the number by using entry tool frame variable number
-- to use continue tool to continue
+- assistant must use a tool to set breakpoints at some line between 30 and 65
+- assistant must use a tool to run the program (LLDB command "run")
+- assistant must use a tool to inspect the program state (LLDB commands "frame variable" or "print")
+- assistant must use a tool to continue execution (LLDB command "continue")
+
+using the "stdin_write" tool for operating the LLDB is allowed
 
 
 

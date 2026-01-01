@@ -28,7 +28,8 @@ public class AgentService(
     
         var assistantMessagesAfterLastUserCount = messages
             .Skip(lastUserMessageIndex + 1).Count(m => m.Role == MessageRole.Assistant);
-        
+
+        Console.WriteLine($"Assistant messages after last user count: {assistantMessagesAfterLastUserCount}");
         var isMaxTurnsReached = assistantMessagesAfterLastUserCount > ToolCallLoopMaxTurns;
         Console.WriteLine($"Is max turns reached: {isMaxTurnsReached}");
         return isMaxTurnsReached;
@@ -98,6 +99,8 @@ public class AgentService(
         Sometimes the program will ask for input. You can use the stdin_write tool to provide input to the program. 
         Provide the input in the format the program expects. For example if the program expects a number, you should provide a number without any other text.
         The tool will return the output of the program after the input is provided.
+
+        When setting breakpoint do not include the file name in the command.
         
         You can call tools up to {ToolCallLoopMaxTurns} times before you respond to the user. 
         """;

@@ -80,6 +80,7 @@ public class EvalService
         var result = await RunEvalAsync(evalDefinition);
         var eval = new Eval(evalDefinition, result);
         await WriteToFileSystemAsync([eval]);
+        Console.WriteLine(eval.Result.Judgement);
     }
 
     private async Task<EvalResult> RunEvalAsync(EvalDefinition definition)
@@ -130,7 +131,7 @@ public class EvalService
                 ## Chat History:
                 {ToString(conversationForEvaluation)}
 
-                Your response must start with PASS or FAIL. If FAIL, provide reasoning on a new line.";
+                Your response must start with PASS or FAIL. Provide reasoning on a new line.";
     }
 
     private async Task<List<EvalDefinition>> ReadEvalDefinitionsAsync()
@@ -170,7 +171,7 @@ public class EvalService
     }
 
      private async Task WriteToFileSystemAsync(Eval eval, string evalFolder) {
-        var chatHistoryPath = Path.Combine(evalFolder, "chat-history.json");
+        var chatHistoryPath = Path.Combine(evalFolder, "conversation-for-evaluation.json");
         var resultPath = Path.Combine(evalFolder, "result.md");
         await File.WriteAllTextAsync(chatHistoryPath, ToString(eval.Result.ConversationForEvaluation));
         await File.WriteAllTextAsync(resultPath, eval.Result.Judgement);
