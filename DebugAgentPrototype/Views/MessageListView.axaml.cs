@@ -3,9 +3,9 @@ using Avalonia.Markup.Xaml;
 
 namespace DebugAgentPrototype.Views;
 
-public partial class MainWindow : Window
+public partial class MessageListView : UserControl
 {
-    public MainWindow()
+    public MessageListView()
     {
         InitializeComponent();
     }

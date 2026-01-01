@@ -50,6 +50,7 @@ public partial class App : Application
         services.AddSingleton<ToolsService>();
         services.AddSingleton<AgentService>();
         services.AddSingleton<LldbOutputViewModel>();
+        services.AddSingleton<ChatViewModel>();
         services.AddSingleton<MainViewModel>();
 
         return services.BuildServiceProvider();

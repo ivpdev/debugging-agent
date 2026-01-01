@@ -1,0 +1,36 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:DebugAgentPrototype.ViewModels"
+             xmlns:views="using:DebugAgentPrototype.Views"
+             x:Class="DebugAgentPrototype.Views.ChatView"
+             x:DataType="vm:ChatViewModel">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        
+        <!-- Messages List -->
+        <views:MessageListView Grid.Row="0" DataContext="{Binding}" Margin="0,0,0,10"/>
+        
+        <!-- Input Area -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBox x:Name="UserInputBox"
+                     Grid.Column="0" 
+                     Text="{Binding UserInput, Mode=TwoWay}" 
+                     Watermark="Type a message..."
+                     Margin="0,0,10,0"
+                     KeyDown="OnUserInputKeyDown"/>
+            <Button Grid.Column="1" 
+                    Content="Send" 
+                    Command="{Binding SendMessageCommand}"
+                    IsEnabled="{Binding !IsBusy}"
+                    MinWidth="80"/>
+        </Grid>
+    </Grid>
+</UserControl>
+

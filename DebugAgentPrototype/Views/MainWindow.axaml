@@ -16,40 +16,7 @@
         </Border>
         
         <!-- Right Column: Chat -->
-        <Grid Grid.Column="1" Grid.Row="0" Margin="10">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="*"/>
-                <RowDefinition Height="Auto"/>
-            </Grid.RowDefinitions>
-            
-            <!-- Messages List -->
-            <ListBox Grid.Row="0" ItemsSource="{Binding UiMessages}" Margin="0,0,0,10">
-                <ListBox.ItemTemplate>
-                    <DataTemplate>
-                        <views:MessageView DataContext="{Binding}"/>
-                    </DataTemplate>
-                </ListBox.ItemTemplate>
-            </ListBox>
-            
-            <!-- Input Area -->
-            <Grid Grid.Row="1">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-                <TextBox x:Name="UserInputBox"
-                         Grid.Column="0" 
-                         Text="{Binding UserInput, Mode=TwoWay}" 
-                         Watermark="Type a message..."
-                         Margin="0,0,10,0"
-                         KeyDown="OnUserInputKeyDown"/>
-                <Button Grid.Column="1" 
-                        Content="Send" 
-                        Command="{Binding SendMessageCommand}"
-                        IsEnabled="{Binding !IsBusy}"
-                        MinWidth="80"/>
-            </Grid>
-        </Grid>
+        <views:ChatView Grid.Column="1" Grid.Row="0" DataContext="{Binding ChatViewModel}" Margin="10"/>
     </Grid>
 </Window>
 

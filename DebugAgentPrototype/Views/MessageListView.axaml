@@ -1,0 +1,15 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:DebugAgentPrototype.ViewModels"
+             xmlns:views="using:DebugAgentPrototype.Views"
+             x:Class="DebugAgentPrototype.Views.MessageListView"
+             x:DataType="vm:ChatViewModel">
+    <ListBox ItemsSource="{Binding UiMessages}">
+        <ListBox.ItemTemplate>
+            <DataTemplate>
+                <views:MessageView DataContext="{Binding}"/>
+            </DataTemplate>
+        </ListBox.ItemTemplate>
+    </ListBox>
+</UserControl>
+
