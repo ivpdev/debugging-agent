@@ -49,48 +49,9 @@ public class AgentService(
         await Task.Delay(500);
         var lldbOutput = appState.LldbOutput;
 
-        registerUserLldbCommand(command, lldbOutput);
-    }
-
-    private void registerUserLldbCommand(string command, string lldbOutput)
-    {
-        var toolCallId = addUserMessageLldbCommand(command);
-        addMessageUserLldbCommandResult(toolCallId, lldbOutput);
-    }
-
-    private string addUserMessageLldbCommand(string command)
-    {
-        var toolCallId = "user_stdin_write_" + Guid.NewGuid().ToString();
-        var UserMessage = new UserMessage(command, [new ToolCallRequest
-        {
-            Id = toolCallId,
-            Name = "stdin_write",
-            Arguments = JsonSerializer.Serialize(new { text = command })
-        }]);
-        
-        appState.Messages.Add(UserMessage);
-        MessageAdded?.Invoke(this, UserMessage);
-        return toolCallId;
-    }
-
-    private void addMessageUserLldbCommandResult(string toolCallId, string lldbOutput)
-    {
-        var toolCallRequest = new ToolCallRequest
-        {
-            Id = toolCallId,
-            Name = "stdin_write",
-            Arguments = ""
-        };
-        
-        var toolCall = new ToolCall
-        {
-            Request = toolCallRequest,
-            Result = lldbOutput
-        };
-        
-        var toolCallMessage = new ToolCallMessage(toolCall);
-        appState.Messages.Add(toolCallMessage);
-        MessageAdded?.Invoke(this, toolCallMessage);
+        var newMessage = new UserLldbCommandMessage(command, lldbOutput);
+        appState.Messages.Add(newMessage);
+        MessageAdded?.Invoke(this, newMessage);
     }
 
     public async Task ProcessLastUserMessageAsync() {

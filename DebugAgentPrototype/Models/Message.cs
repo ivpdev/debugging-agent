@@ -7,6 +7,7 @@ namespace DebugAgentPrototype.Models;
 public enum MessageRole
 {
     User,
+    UserLldbCommand,
     Assistant,
     System,
     Tool,
@@ -42,12 +43,21 @@ public class ToolCallMessage: Message
 public class UserMessage: Message
 {
     public string? Text { get; init; }
-    public List<ToolCallRequest> ToolCallRequests { get; init; }
-    public UserMessage(string text, List<ToolCallRequest>? toolCallRequests = null)
+    public UserMessage(string text)
     {
         Text = text;
-        ToolCallRequests = toolCallRequests ?? new List<ToolCallRequest>();
         Role = MessageRole.User;
+    }
+}
+
+public class UserLldbCommandMessage: Message {
+    public string Command { get; init; }
+    public string Output { get; init; }
+    public UserLldbCommandMessage(string command, string output)
+    {
+        Command = command;
+        Output = output;
+        Role = MessageRole.UserLldbCommand;
     }
 }
 

@@ -13,13 +13,15 @@ public class LldbOutputViewModel : ReactiveObject
 {
     private readonly LldbService _lldbService;
     private readonly AppState _appState;
+    private readonly AgentService _agentService;
     private string _lldbInput = string.Empty;
     private bool _isLldbRunning;
 
-    public LldbOutputViewModel(LldbService lldbService, AppState appState)
+    public LldbOutputViewModel(LldbService lldbService, AppState appState, AgentService agentService)
     {
         _lldbService = lldbService;
         _appState = appState;
+        _agentService = agentService;
         _lldbService.OutputReceived += OnLldbOutputReceived;
 
         var canSendLldb = this.WhenAnyValue(
@@ -69,7 +71,8 @@ public class LldbOutputViewModel : ReactiveObject
 
         try
         {
-            await _lldbService.SendCommandAsync(command);
+            //await _lldbService.SendCommandAsync(command);
+            await _agentService.SendUserLldbCommandAsync(command);
             Dispatcher.UIThread.Post(() =>
             {
                 IsLldbRunning = _lldbService.IsRunning;

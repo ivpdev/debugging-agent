@@ -118,6 +118,15 @@ public class OpenRouterService
                 ["content"] = userMsg.Text
             };
         }
+
+        if (message is UserLldbCommandMessage userLldbCommandMsg)
+        {
+            return new Dictionary<string, object>
+            {
+                ["role"] = "user",
+                ["content"] = "I ran the following command: " + userLldbCommandMsg.Command + "\nHere is the output:\n" + userLldbCommandMsg.Output
+            };
+        }
         
         if (message is SystemMessage systemMsg)
         {

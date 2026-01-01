@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reactive;
-using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Avalonia.Threading;
@@ -16,14 +15,13 @@ namespace DebugAgentPrototype.ViewModels;
 public class MainViewModel : ReactiveObject
 {
     private readonly AgentService _agentService;
-    private readonly AppState _appState;
     private readonly LldbService _lldbService;
     private string _userInput = string.Empty;
     private bool _isBusy;
 
-    private bool COMPRESS_TOOL_CALL_SEQUENCE = false;
+    private readonly bool _compressToolCallSequence = false;
 
-    public ObservableCollection<UIMessage> UIMessages { get; }
+    public ObservableCollection<UiMessage> UiMessages { get; }
     public LldbOutputViewModel LldbOutputViewModel { get; }
 
     public MainViewModel(
@@ -33,13 +31,12 @@ public class MainViewModel : ReactiveObject
         LldbOutputViewModel lldbOutputViewModel)
     {
         _agentService = agentService;
-        _appState = appState;
         _lldbService = lldbService;
         LldbOutputViewModel = lldbOutputViewModel;
 
-        _appState.Messages = AgentService.InitMessages();
+        appState.Messages = AgentService.InitMessages();
 
-        UIMessages = new ObservableCollection<UIMessage>();
+        UiMessages = [];
 
         _agentService.MessageAdded += OnMessageAdded;
 
@@ -87,44 +84,19 @@ public class MainViewModel : ReactiveObject
     {
         Dispatcher.UIThread.Post(() =>
         {
-            if (COMPRESS_TOOL_CALL_SEQUENCE && message.Role == MessageRole.Tool) {
-                var lastUIMessage = UIMessages.LastOrDefault();
-                if (lastUIMessage != null && lastUIMessage.Role == MessageRole.Tool) {
-                    var toolCallUIMessage = new UIMessage(message);
-                    UIMessages.Remove(lastUIMessage);
-                    UIMessages.Add(toolCallUIMessage);
+            if (message is UserLldbCommandMessage) return;
+            
+            if (_compressToolCallSequence && message.Role == MessageRole.Tool) {
+                var lastUiMessage = UiMessages.LastOrDefault();
+                if (lastUiMessage is { Role: MessageRole.Tool }) {
+                    var toolCallUiMessage = new UiMessage(message);
+                    UiMessages.Remove(lastUiMessage);
+                    UiMessages.Add(toolCallUiMessage);
                 }
             } else {
-                UIMessages.Add(new UIMessage(message));
+                UiMessages.Add(new UiMessage(message));
             }
         });
-    }
-
-    private List<UIMessage> ToViewModelMessagesNew(List<Message> messages)
-    {
-        var viewModelMessages = messages
-            .Where(message => message.Role != MessageRole.System && message.Role != MessageRole.Tool)
-            .Select(message => new UIMessage(message))
-            .ToList();
-
-        var lastTextMessageIndex = messages.FindLastIndex(m => (m is UserMessage) || m is AssistantMessage && !string.IsNullOrEmpty((m as AssistantMessage)?.Text));
-        var lastAssistantToolCallMessageIndex = messages.FindLastIndex(m => m.Role == MessageRole.Assistant && m is AssistantMessage am && am.ToolCallRequests.Count > 0);
-
-        if (lastAssistantToolCallMessageIndex > lastTextMessageIndex && messages[lastAssistantToolCallMessageIndex] is AssistantMessage assistantMessage)
-        {
-            var processingStatus = "Processing tool calls:" + string.Join(", ", assistantMessage.ToolCallRequests.Select(tcr => tcr.Name));
-            viewModelMessages.Add(new UIMessage(messages[lastAssistantToolCallMessageIndex]) { ProcessingStatus = processingStatus });
-        }
-        
-        return viewModelMessages;
-    }
-
-    private List<UIMessage> ToViewModelMessages(List<Message> messages)
-    {
-        return messages
-            .Where(message => message.Role != MessageRole.System)
-            .Select(message => new UIMessage(message))
-            .ToList();
     }
 
     private async Task SendMessageAsync()
@@ -153,51 +125,41 @@ public class MainViewModel : ReactiveObject
     }
 }
 
-public class UIMessage {
+public class UiMessage {
 
-    public MessageRole Role { get; set; }
-    public string Text { get; set; } = string.Empty;
-    public List<ToolCallRequest> ToolCallRequests { get; set; } = new List<ToolCallRequest>();
-    public List<UIToolCall> ToolCalls { get; set; } = new List<UIToolCall>();
-    public string ProcessingStatus { get; set; } = string.Empty;
+    public MessageRole Role { get; }
+    public string? Text { get; set; } = string.Empty;
+    public List<ToolCallRequest> ToolCallRequests { get; set; } = new();
+    public List<UiToolCall> ToolCalls { get; set; } = new();
 
-    public UIMessage(Message message)
+    public UiMessage(Message message)
     {
         Role = message.Role;
         
-        if (message is UserMessage userMessage)
+        switch (message)
         {
-            Text = userMessage.Text;
-        }
-        if (message is SystemMessage systemMessage)
-        {
-            Text = systemMessage.Text;
-        }
-        if (message is AssistantMessage assistantMessage)
-        {
-            Text = assistantMessage.Text ?? string.Empty;
-            ToolCallRequests = assistantMessage.ToolCallRequests;
-        }
-        if (message is ToolCallMessage toolCallMessage)
-        {
-            ToolCalls = [new UIToolCall(toolCallMessage.ToolCall)];
+            case UserMessage userMessage:
+                Text = userMessage.Text;
+                break;
+            case SystemMessage systemMessage:
+                Text = systemMessage.Text;
+                break;
+            case AssistantMessage assistantMessage:
+                Text = assistantMessage.Text ?? string.Empty;
+                ToolCallRequests = assistantMessage.ToolCallRequests;
+                break;
+            case ToolCallMessage toolCallMessage:
+                ToolCalls = [new UiToolCall(toolCallMessage.ToolCall)];
+                break;
         }
     }
 }
 
-public class UIToolCall
+public class UiToolCall(ToolCall toolCall)
 {
-    public string Id { get; set; } = string.Empty;
-    public string Name { get; set; } = string.Empty;
-    public string Arguments { get; set; } = string.Empty;
-    public string Result { get; set; } = string.Empty;
-
-    public UIToolCall(ToolCall toolCall)
-    {
-        Id = toolCall.Request.Id;
-        Name = toolCall.Request.Name;
-        Arguments = toolCall.Request.Arguments;
-        Result = toolCall.Result != null ? JsonSerializer.Serialize(toolCall.Result) : string.Empty;
-    }
+    public string Id { get; set; } = toolCall.Request.Id;
+    public string Name { get; set; } = toolCall.Request.Name;
+    public string Arguments { get; set; } = toolCall.Request.Arguments;
+    public string Result { get; set; } = toolCall.Result != null ? JsonSerializer.Serialize(toolCall.Result) : string.Empty;
 }
 
