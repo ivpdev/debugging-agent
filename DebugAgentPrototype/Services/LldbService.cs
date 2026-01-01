@@ -17,6 +17,7 @@ public class LldbService(AppState appState)
 
     public event EventHandler<string>? OutputReceived;
 
+    //TODO remove
     public bool IsRunning => _lldbProcess != null && _lldbInput != null;
 
     public async Task InitializeAsync()
@@ -72,7 +73,7 @@ public class LldbService(AppState appState)
     public async Task SendCommandAsync(string command)
     {
         Console.WriteLine($"[LLDB] Sending command: {command}");
-        await _lldbInput.WriteLineAsync(command);
+        await _lldbInput?.WriteLineAsync(command)!;
         await _lldbInput.FlushAsync();
     }
 

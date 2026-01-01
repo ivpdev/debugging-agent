@@ -182,7 +182,7 @@ public class UIMessage {
         }
         if (message is ToolCallMessage toolCallMessage)
         {
-            ToolCalls = toolCallMessage.ToolCalls.Select(tc => new UIToolCall(tc)).ToList();
+            ToolCalls = [new UIToolCall(toolCallMessage.ToolCall)];
         }
     }
 }

@@ -52,12 +52,15 @@ public class AgentService(
             assistantMessage = ToAssistantMessage(response);
             appState.Messages.Add(assistantMessage);
             MessageAdded?.Invoke(this, assistantMessage);
-
+            
             if (assistantMessage.ToolCallRequests.Count > 0) {
                 var toolCalls = await toolsService.CallToolsAsync(assistantMessage.ToolCallRequests);
-                var toolCallMessage = new ToolCallMessage { ToolCalls = toolCalls };
-                appState.Messages.Add(toolCallMessage);
-                MessageAdded?.Invoke(this, toolCallMessage);
+                var toolCallMessages = toolCalls.Select(tc  => new ToolCallMessage(tc)).ToList();
+                foreach (var toolCallMessage in toolCallMessages)
+                {
+                    appState.Messages.Add(toolCallMessage);
+                    MessageAdded?.Invoke(this, toolCallMessage);
+                }
             }
         } while (!IsTaskComplete(assistantMessage) && !IsMaxTurnsReached(appState.Messages)); //TODO the assistant can both call tools and respond to user. double check if it's considered in both conditions
     
@@ -81,22 +84,23 @@ public class AgentService(
 
     public static List<Message> InitMessages()
     {
-        var fileName = SourceCodeService.GetInspectedFilePath(); //TODO fix string interpolation 
-        var systemPrompt = """
-        You are a helpful assistant that can help with debugging a program with LLDB debugger.
+        var systemPrompt = GetSystemPrompt();
+        return [new SystemMessage(systemPrompt)];
+    }
 
-        You will have tools to help you accomplish the user's goals. The file you are inspecting is {fileName}.
+    private static string GetSystemPrompt()
+    {
+        return $"""
+        You are a helpful assistant that can the user help with debugging a program with LLDB debugger.
 
-        Sometimes the program will ask for input. You can use the stdin tool to provide input to the program. 
+        You will have tools to help you accomplish the user's goals.
+        
+        Sometimes the program will ask for input. You can use the stdin_write tool to provide input to the program. 
         Provide the input in the format the program expects. For example if the program expects a number, you should provide a number without any other text.
         The tool will return the output of the program after the input is provided.
-
-    
-        You can call tools up to {MaxTurns} times before you respond to the user. 
-
-        """.Replace("{MaxTurns}", ToolCallLoopMaxTurns.ToString()); //TODO maybe add a tool to call tools?
         
-        return [new SystemMessage(systemPrompt)];
+        You can call tools up to {ToolCallLoopMaxTurns} times before you respond to the user. 
+        """;
     }
 
 }

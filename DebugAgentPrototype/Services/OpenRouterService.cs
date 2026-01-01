@@ -13,32 +13,27 @@ namespace DebugAgentPrototype.Services;
 public class OpenRouterService
 {
     private readonly HttpClient _httpClient;
-    private readonly string _apiKey;
+    //TODO separate base URL and move to config
     private const string ApiUrl = "https://openrouter.ai/api/v1/chat/completions";
 
     public OpenRouterService()
     {
-        _apiKey = Environment.GetEnvironmentVariable("OPENROUTER_API_KEY") ?? "";
-        _httpClient = new HttpClient();
-        if (!string.IsNullOrEmpty(_apiKey))
+        var apiKey = Environment.GetEnvironmentVariable("OPENROUTER_API_KEY") ?? "";
+        if (string.IsNullOrEmpty(apiKey))
         {
-            _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {_apiKey}");
+            throw new InvalidOperationException("OPENROUTER_API_KEY environment variable is not set");
         }
-        _httpClient.DefaultRequestHeaders.Add("HTTP-Referer", "https://github.com/your-repo");
-        _httpClient.DefaultRequestHeaders.Add("X-Title", "Debug Agent Prototype");
+        
+        _httpClient = new HttpClient();
+        _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
     }
     
     public async Task<ILlmResponse> CallModelAsync(List<Message> messages, List<ToolConfig>? tools = null)
     {
-        if (string.IsNullOrEmpty(_apiKey))
-        {
-            throw new InvalidOperationException("OPENROUTER_API_KEY environment variable is not set");
-        }
-
         var requestBody = new
         {
             model = "anthropic/claude-sonnet-4.5", 
-            messages = FlattenMessages(messages.Select(ToOpenRouterMessage)),
+            messages = messages.Select(ToOpenRouterMessage),
             tools = tools?.Select(ToOpenRouterTool).ToList()
         };
 
@@ -79,7 +74,7 @@ public class OpenRouterService
         };
     }
 
-    private static object ToOpenRouterMessage(Models.Message message) {
+    private static object ToOpenRouterMessage(Message message) {
         if (message is AssistantMessage assistantMsg)
         {
             var result = new Dictionary<string, object>
@@ -105,17 +100,15 @@ public class OpenRouterService
             
             return result;
         }
-        
+
         if (message is ToolCallMessage toolMsg)
         {
-            var toolMessages = toolMsg.ToolCalls.Select(tc => new Dictionary<string, object>
+            return new Dictionary<string, object>
             {
                 ["role"] = "tool",
-                ["content"] = JsonSerializer.Serialize(tc.Result ?? ""),
-                ["tool_call_id"] = tc.Id
-            }).ToList();
-            
-            return toolMessages;
+                ["content"] = JsonSerializer.Serialize(toolMsg.ToolCall.Result ?? ""),
+                ["tool_call_id"] = toolMsg.ToolCall.Id
+            };
         }
 
         if (message is UserMessage userMsg)
@@ -138,34 +131,13 @@ public class OpenRouterService
 
         throw new Exception($"Unknown message type: {message.GetType()}");
     }
-
-    //TODO simplify this
-    private static List<object> FlattenMessages(IEnumerable<object> messageObjects)
-    {
-        var result = new List<object>();
-        foreach (var msg in messageObjects)
-        {
-            if (msg is System.Collections.IEnumerable enumerable && !(msg is string) && !(msg is Dictionary<string, object>))
-            {
-                foreach (var item in enumerable)
-                {
-                    result.Add(item);
-                }
-            }
-            else
-            {
-                result.Add(msg);
-            }
-        }
-        return result;
-    }
-
+    
+    //TODO review
     private static ILlmResponse ParseOpenRouterResponse(string jsonResponse)
     {
         using var document = JsonDocument.Parse(jsonResponse);
         var root = document.RootElement;
 
-        // Get the choices array
         if (!root.TryGetProperty("choices", out var choicesElement) || choicesElement.ValueKind != JsonValueKind.Array)
         {
             throw new Exception("Invalid response: missing or invalid 'choices' array");
@@ -176,21 +148,16 @@ public class OpenRouterService
             throw new Exception("No response from OpenRouter API: empty choices array");
         }
 
-        // Get the first choice
         var firstChoice = choicesElement[0];
-        
-        // Get the message from the choice
         if (!firstChoice.TryGetProperty("message", out var messageElement))
         {
             throw new Exception("Invalid response: missing 'message' in choice");
         }
 
-        // Extract content (can be null or empty)
         var content = messageElement.TryGetProperty("content", out var contentElement) 
             ? contentElement.GetString() ?? "" 
             : "";
 
-        // Extract tool_calls (snake_case property name)
         var toolCalls = new List<IToolCall>();
         if (messageElement.TryGetProperty("tool_calls", out var toolCallsElement) && 
             toolCallsElement.ValueKind == JsonValueKind.Array)

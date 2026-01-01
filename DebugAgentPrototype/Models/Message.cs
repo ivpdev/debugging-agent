@@ -32,16 +32,17 @@ public class AssistantMessage : Message
 
 public class ToolCallMessage: Message
 {
-    public List<Services.tools.ToolCall> ToolCalls { get; init; } = new List<Services.tools.ToolCall>();
-    public ToolCallMessage()
+    public Services.tools.ToolCall ToolCall { get; init; }
+    public ToolCallMessage(Services.tools.ToolCall toolCall)
     {
+        ToolCall = toolCall;
         Role = MessageRole.Tool;
     }
 }
 
 public class UserMessage: Message
 {
-    public string Text;
+    public string? Text { get; init; }
     public UserMessage(string text)
     {
         Text = text;

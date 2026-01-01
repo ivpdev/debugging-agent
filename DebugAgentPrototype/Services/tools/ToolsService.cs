@@ -7,23 +7,24 @@ namespace DebugAgentPrototype.Services.tools;
 
 public class ToolsService(AppState appState, LldbService lldbService)
 {
-    private readonly ToolStdin _toolStdin = new(appState, lldbService);
+    private readonly ToolStdinWrite _toolStdinWrite = new(appState, lldbService);
 
     public static List<ToolConfig> GetTools()
     {
         return
         [
             ToolGetSourceCode.GetConfig(),
-            ToolStdin.GetConfig()
+            ToolStdinWrite.GetConfig()
         ];
     }
 
-    private async Task<ToolCall> CallTool(ToolCallRequest toolCallRequest)
+    //TODO add set breakpoint tool
+    private async Task<ToolCall> CallToolAsync(ToolCallRequest toolCallRequest)
     {
         object? result = toolCallRequest.Name switch
         {
             "get_source_code" => ToolGetSourceCode.CallAsync(),
-            "stdin_write" => await _toolStdin.CallAsync(toolCallRequest.Arguments),
+            "stdin_write" => await _toolStdinWrite.CallAsync(toolCallRequest.Arguments),
             _ => throw new Exception($"Tool {toolCallRequest.Name} not found")
         };
 
@@ -40,7 +41,7 @@ public class ToolsService(AppState appState, LldbService lldbService)
     {
         var toolCalls = new List<ToolCall>();
         foreach (var toolCallRequest in toolCallRequests) {
-            var toolCall = await CallTool(toolCallRequest);
+            var toolCall = await CallToolAsync(toolCallRequest);
             toolCalls.Add(toolCall);
         }
         return toolCalls;

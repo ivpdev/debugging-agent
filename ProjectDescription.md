@@ -1,7 +1,10 @@
+
 # DebugAgentPrototype - AI-Assisted Debugger
 
 ## Overview
 Desktop GUI prototype for an AI-assisted debugger using Avalonia UI + ReactiveUI + MVVM. Currently a scaffolding with command-based agent simulation (no real AI/debugger integration yet).
+
+IMPORTANT The code is not meant to be production-ready. The intention of this prototype is to show the solution design. Technical aspects like handling or edge cases, proper error handling, logging etc. were omitted for sake of readbility.
 
 ## Tech Stack
 - **Framework**: .NET 9.0
@@ -98,6 +101,11 @@ directions
 
 
 TODO Code
+  - clean logging
+  - TODO clean the readme
+  - privatte methods convention 
+  - add the most recent debugger ouput to every call
+  - context compression
   - remove cancellation token
   - make file
   - fix rerendering of the history (scrolly is reset)

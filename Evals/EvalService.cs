@@ -7,6 +7,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using DebugAgentPrototype.Models;
 using DebugAgentPrototype.Services;
+using DebugAgentPrototype.Services.tools;
 
 namespace Evals;
 
@@ -41,16 +42,17 @@ public class EvalService
 
     public EvalService()
     {
-        InitAssistantHeadless();
     }
 
-    private void InitAssistantHeadless()
+    private async Task InitAssistantHeadless()
     {
         _openRouterService = new OpenRouterService();
         _appState = new AppState();
         _lldbService = new LldbService(_appState);
         var toolsService = new ToolsService(_appState, _lldbService);
-        _agentService = new AgentService(_lldbService, _openRouterService, _appState, toolsService);
+        _agentService = new AgentService(_openRouterService, _appState, toolsService);
+        await _lldbService.InitializeAsync();
+        _appState.Messages = AgentService.InitMessages();
     }
 
     public async Task RunAllEvalsAsync()
@@ -90,9 +92,8 @@ public class EvalService
 
     private async Task<List<Message>> GenerateConversationAsync(string userMessage)
     {
-        InitAssistantHeadless();
-        await _lldbService.InitializeAsync();
-        _appState.Messages = _agentService.InitMessages();
+        await InitAssistantHeadless();
+        
         _agentService.AddUserMessage(userMessage);
         await _agentService.ProcessLastUserMessageAsync();
         return _appState.Messages;
@@ -103,6 +104,7 @@ public class EvalService
         return conversation.Where(m => m.Role != MessageRole.System).ToList();
     }
 
+    //TODO clean the prompt
     private async Task<string> EvaluateConversationAsync(List<Message> conversationForEvaluation,
         string expectedCriteria)
     {
@@ -170,7 +172,7 @@ public class EvalService
      private async Task WriteToFileSystemAsync(Eval eval, string evalFolder) {
         var chatHistoryPath = Path.Combine(evalFolder, "chat-history.json");
         var resultPath = Path.Combine(evalFolder, "result.md");
-        await File.WriteAllTextAsync(chatHistoryPath, ToJsonString(eval.Result.Conversation));
+        await File.WriteAllTextAsync(chatHistoryPath, ToString(eval.Result.ConversationForEvaluation));
         await File.WriteAllTextAsync(resultPath, eval.Result.Judgement);
      }
 
@@ -185,20 +187,10 @@ private string GetEvalsDirectory()
         return fullPath;
     }
 
-    private string ToString(List<Message> conversationForEvaluation)
+    private string ToString(List<Message> conversation)
     {
-        var sb = new StringBuilder();
-        foreach (var message in conversationForEvaluation)
-        {
-            sb.AppendLine(ToString(message));
-        }
-
-        return sb.ToString();
-    }
-
-    private string ToString(Message message)
-    {
-        return ToJsonString(SerializeMessage(message));
+        var messages = conversation.Select(SerializeMessage).ToList();
+        return ToJsonString(messages);
     }
 
     private string ToJsonString(object obj)
@@ -209,7 +201,7 @@ private string GetEvalsDirectory()
         });
     }
 
-    private object SerializeMessage(Message message)
+    private static object SerializeMessage(Message message)
     {
         var baseMessage = new Dictionary<string, object>
         {
@@ -217,8 +209,20 @@ private string GetEvalsDirectory()
             ["Timestamp"] = message.Timestamp
         };
 
-        if (message is AssistantMessage assistantMsg)
+        if (message is UserMessage userMsg)
         {
+            baseMessage["Text"] = userMsg.Text ?? "";
+        }
+        else if (message is SystemMessage systemMsg)
+        {
+            baseMessage["Text"] = systemMsg.Text ?? "";
+        }
+        else if (message is AssistantMessage assistantMsg)
+        {
+            if (assistantMsg.Text != null)
+            {
+                baseMessage["Text"] = assistantMsg.Text;
+            }
             if (assistantMsg.ToolCallRequests.Count > 0)
             {
                 baseMessage["ToolCallRequests"] = assistantMsg.ToolCallRequests.Select(tcr => new Dictionary<string, object>
@@ -231,43 +235,38 @@ private string GetEvalsDirectory()
         }
         else if (message is ToolCallMessage toolMsg)
         {
-            if (toolMsg.ToolCalls.Count > 0)
+            var tc = toolMsg.ToolCall;
+            var toolCallDict = new Dictionary<string, object>
             {
-                baseMessage["ToolCalls"] = toolMsg.ToolCalls.Select(tc =>
+                ["Id"] = tc.Id,
+                ["Name"] = tc.Name,
+                ["Arguments"] = tc.Arguments
+            };
+            
+            if (tc.Result != null)
+            {
+                try
                 {
-                    var toolCallDict = new Dictionary<string, object>
-                    {
-                        ["Id"] = tc.Id,
-                        ["Name"] = tc.Name,
-                        ["Arguments"] = tc.Arguments
-                    };
-                    
-                    if (tc.Result != null)
-                    {
-                        try
-                        {
-                            var resultJson = JsonSerializer.Serialize(tc.Result);
-                            toolCallDict["Result"] = resultJson;
-                        }
-                        catch
-                        {
-                            toolCallDict["Result"] = tc.Result.ToString() ?? "";
-                        }
-                    }
-                    else
-                    {
-                        toolCallDict["Result"] = "";
-                    }
-                    
-                    return toolCallDict;
-                }).ToList();
+                    var resultJson = JsonSerializer.Serialize(tc.Result);
+                    toolCallDict["Result"] = resultJson;
+                }
+                catch
+                {
+                    toolCallDict["Result"] = tc.Result.ToString() ?? "";
+                }
             }
+            else
+            {
+                toolCallDict["Result"] = "";
+            }
+            
+            baseMessage["ToolCall"] = toolCallDict;
         }
 
         return baseMessage;
     }
 
-    private void PrintResults(Eval[] evals)
+    private static void PrintResults(Eval[] evals)
     {
         foreach (var eval in evals)
         {

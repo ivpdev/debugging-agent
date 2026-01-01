@@ -6,17 +6,8 @@ using DebugAgentPrototype.Services.tools;
 
 namespace DebugAgentPrototype.Services;
 
-public class ToolStdin
+public class ToolStdinWrite(AppState appState, LldbService lldbService)
 {
-    private readonly AppState _appState;
-    private readonly LldbService _lldbService;
-
-    public ToolStdin(AppState appState, LldbService lldbService)
-    {
-        _appState = appState;
-        _lldbService = lldbService;
-    }
-
     public static ToolConfig GetConfig()
     {
         return new ToolConfig("stdin_write", "Write EXACTLY the provided text to the program's stdin. The `text` value is the literal bytes to send (e.g., \"run\\n\"). Do NOT wrap it in JSON or add keys like `command`.", new { 
@@ -54,10 +45,12 @@ public class ToolStdin
     {
         try
         {
-            string text = ParseTextFromParameters(parameters);
-            await _lldbService.SendCommandAsync(text);
+            var text = ParseTextFromParameters(parameters);
+            await lldbService.SendCommandAsync(text);
+            
+            //FIXME timeout to wait for result
             await Task.Delay(1000);
-            return _appState.LldbOutput;
+            return appState.LldbOutput;
         }
         catch (JsonException ex)
         {
