@@ -78,11 +78,6 @@ public class ChatViewModel : ReactiveObject
         try
         {
             _agentService.AddUserMessage(userText);
-
-            Dispatcher.UIThread.Post(() =>
-            {
-                _lldbOutputViewModel.UpdateRunningState();
-            });
             await _agentService.ProcessLastUserMessageAsync();
         }
         finally

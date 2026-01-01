@@ -33,10 +33,6 @@ public class MainViewModel : ReactiveObject
         try
         {
             await _lldbService.InitializeAsync();
-            Dispatcher.UIThread.Post(() =>
-            {
-                LldbOutputViewModel.UpdateRunningState();
-            });
         }
         catch (Exception ex)
         {

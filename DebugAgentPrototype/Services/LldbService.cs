@@ -19,9 +19,6 @@ public class LldbService(AppState appState)
 
     public event EventHandler<string>? OutputReceived;
 
-    //TODO remove
-    public bool IsRunning => _lldbProcess != null && _lldbInput != null;
-
     public async Task InitializeAsync()
     {
         if (_lldbProcess != null)
