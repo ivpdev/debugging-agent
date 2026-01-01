@@ -4,6 +4,7 @@
 
 ## Prerequisites
 
+.NET must be installed.
 lldb is installed an available in the command line.
 
 ## Running Application
