@@ -4,42 +4,32 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using DebugAgentPrototype.Models;
+using DebugAgentPrototype.Services.tools;
 
 namespace DebugAgentPrototype.Services;
 
-public class AgentService
+public class AgentService(
+    OpenRouterService openRouterService,
+    AppState appState,
+    ToolsService toolsService)
 {
-    private const int MaxTurns = 10;
-    
-    private readonly LldbService _lldbService;
-    private readonly OpenRouterService _openRouterService;
-    private readonly AppState _appState;
-    private readonly ToolsService _toolsService;
+    private const int ToolCallLoopMaxTurns = 10;
 
     public event EventHandler<Message>? MessageAdded;
 
-    public AgentService(LldbService lldbService, OpenRouterService llmService, AppState appState, ToolsService toolsService)
-    {
-        _lldbService = lldbService;
-        _openRouterService = llmService;
-        _appState = appState;
-        _toolsService = toolsService;
-    }
-
-    private bool IsTaskComplete(AssistantMessage assistantMessage)
+    private static bool IsTaskComplete(AssistantMessage assistantMessage)
     {
         return assistantMessage.ToolCallRequests.Count == 0 && !string.IsNullOrEmpty(assistantMessage.Text);
     }
 
-    private bool IsMaxTurnsReached(List<Message> messages)
+    private static bool IsMaxTurnsReached(List<Message> messages)
     {
         var lastUserMessageIndex = messages.FindLastIndex(m => m.Role == MessageRole.User);
     
         var assistantMessagesAfterLastUserCount = messages
-            .Skip(lastUserMessageIndex + 1)
-            .Where(m => m.Role == MessageRole.Assistant).Count();
+            .Skip(lastUserMessageIndex + 1).Count(m => m.Role == MessageRole.Assistant);
         
-        var isMaxTurnsReached = assistantMessagesAfterLastUserCount > MaxTurns;
+        var isMaxTurnsReached = assistantMessagesAfterLastUserCount > ToolCallLoopMaxTurns;
         Console.WriteLine($"Is max turns reached: {isMaxTurnsReached}");
         return isMaxTurnsReached;
     }
@@ -47,7 +37,7 @@ public class AgentService
     public void AddUserMessage(string userText)
     {
         var newMessage = new UserMessage(userText) ;
-        _appState.Messages.Add(newMessage);
+        appState.Messages.Add(newMessage);
         MessageAdded?.Invoke(this, newMessage);
     }
 
@@ -57,54 +47,23 @@ public class AgentService
         AssistantMessage assistantMessage;
 
         do {
-            var response = await _openRouterService.CallModelAsync(_appState.Messages, tools);
+            var response = await openRouterService.CallModelAsync(appState.Messages, tools);
 
             assistantMessage = ToAssistantMessage(response);
-            _appState.Messages.Add(assistantMessage);
+            appState.Messages.Add(assistantMessage);
             MessageAdded?.Invoke(this, assistantMessage);
 
             if (assistantMessage.ToolCallRequests.Count > 0) {
-                var toolCalls = await _toolsService.callToolsAsync(assistantMessage.ToolCallRequests);
+                var toolCalls = await toolsService.CallToolsAsync(assistantMessage.ToolCallRequests);
                 var toolCallMessage = new ToolCallMessage { ToolCalls = toolCalls };
-                _appState.Messages.Add(toolCallMessage);
+                appState.Messages.Add(toolCallMessage);
                 MessageAdded?.Invoke(this, toolCallMessage);
             }
-        } while (!IsTaskComplete(assistantMessage) && !IsMaxTurnsReached(_appState.Messages)); //TODO the assistant can both call tools and respond to user. double check if it's considered in both conditions
+        } while (!IsTaskComplete(assistantMessage) && !IsMaxTurnsReached(appState.Messages)); //TODO the assistant can both call tools and respond to user. double check if it's considered in both conditions
     
     }
 
-    private void PrintMessageHistory(List<Message> messages)
-    {
-        Console.WriteLine("=== Full Message History ===");
-        foreach (var msg in messages)
-        {
-            if (msg is UserMessage userMessage)
-            {
-                Console.WriteLine($"  User Message: {userMessage.Text}");
-            }
-            if (msg is SystemMessage systemMessage)
-            {
-                Console.WriteLine($"  System Message: {systemMessage.Text}");
-            }
-            if (msg is AssistantMessage am && am.ToolCallRequests.Count > 0)
-            {
-                foreach (var toolCall in am.ToolCallRequests)
-                {
-                    Console.WriteLine($"  Tool Call: {toolCall.Name}({toolCall.Arguments})");
-                }
-            }
-            if (msg is ToolCallMessage tm && tm.ToolCalls.Count > 0)
-            {
-                foreach (var toolCall in tm.ToolCalls)
-                {
-                    Console.WriteLine($"  Tool Result: {toolCall.Name} -> {toolCall.Result}");
-                }
-            }
-        }
-        Console.WriteLine("===========================");
-    }
-
-    private AssistantMessage ToAssistantMessage(ILlmResponse response)
+    private static AssistantMessage ToAssistantMessage(ILlmResponse response)
     {
         var toolCallRequests = response.ToolCalls.Select(tc => new ToolCallRequest
         {
@@ -120,7 +79,7 @@ public class AgentService
         };
     }
 
-    public List<Message> InitMessages()
+    public static List<Message> InitMessages()
     {
         var fileName = SourceCodeService.GetInspectedFilePath(); //TODO fix string interpolation 
         var systemPrompt = """
@@ -135,11 +94,9 @@ public class AgentService
     
         You can call tools up to {MaxTurns} times before you respond to the user. 
 
-        """.Replace("{MaxTurns}", MaxTurns.ToString()); //TODO maybe add a tool to call tools?
+        """.Replace("{MaxTurns}", ToolCallLoopMaxTurns.ToString()); //TODO maybe add a tool to call tools?
         
-        return new List<Message> {
-            new SystemMessage(systemPrompt)
-        };
+        return [new SystemMessage(systemPrompt)];
     }
 
 }

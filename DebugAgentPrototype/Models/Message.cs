@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using DebugAgentPrototype.Services;
+using DebugAgentPrototype.Services.tools;
 
 namespace DebugAgentPrototype.Models;
 
@@ -31,7 +32,7 @@ public class AssistantMessage : Message
 
 public class ToolCallMessage: Message
 {
-    public List<Services.ToolCall> ToolCalls { get; init; } = new List<Services.ToolCall>();
+    public List<Services.tools.ToolCall> ToolCalls { get; init; } = new List<Services.tools.ToolCall>();
     public ToolCallMessage()
     {
         Role = MessageRole.Tool;

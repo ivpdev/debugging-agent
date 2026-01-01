@@ -9,7 +9,9 @@ using System.Threading.Tasks;
 using Avalonia.Threading;
 using DebugAgentPrototype.Models;
 using DebugAgentPrototype.Services;
+using DebugAgentPrototype.Services.tools;
 using ReactiveUI;
+using ToolCall = DebugAgentPrototype.Services.tools.ToolCall;
 
 namespace DebugAgentPrototype.ViewModels;
 
@@ -37,7 +39,7 @@ public class MainViewModel : ReactiveObject
         _lldbService = lldbService;
         LldbOutputViewModel = lldbOutputViewModel;
 
-        _appState.Messages = _agentService.InitMessages();
+        _appState.Messages = AgentService.InitMessages();
 
         UIMessages = new ObservableCollection<UIMessage>();
 
@@ -192,7 +194,7 @@ public class UIToolCall
     public string Arguments { get; set; } = string.Empty;
     public string Result { get; set; } = string.Empty;
 
-    public UIToolCall(Services.ToolCall toolCall)
+    public UIToolCall(ToolCall toolCall)
     {
         Id = toolCall.Id;
         Name = toolCall.Name;

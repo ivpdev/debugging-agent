@@ -6,6 +6,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Threading.Tasks;
 using DebugAgentPrototype.Models;
+using DebugAgentPrototype.Services.tools;
 
 namespace DebugAgentPrototype.Services;
 
@@ -26,9 +27,8 @@ public class OpenRouterService
         _httpClient.DefaultRequestHeaders.Add("HTTP-Referer", "https://github.com/your-repo");
         _httpClient.DefaultRequestHeaders.Add("X-Title", "Debug Agent Prototype");
     }
-
     
-    public async Task<ILlmResponse> CallModelAsync(List<Models.Message> messages, List<ToolConfig>? tools = null)
+    public async Task<ILlmResponse> CallModelAsync(List<Message> messages, List<ToolConfig>? tools = null)
     {
         if (string.IsNullOrEmpty(_apiKey))
         {
@@ -38,8 +38,8 @@ public class OpenRouterService
         var requestBody = new
         {
             model = "anthropic/claude-sonnet-4.5", 
-            messages = FlattenMessages(messages.Select(toOpenRouterMessage)),
-            tools = tools?.Select(toOpenRouterTool).ToList()
+            messages = FlattenMessages(messages.Select(ToOpenRouterMessage)),
+            tools = tools?.Select(ToOpenRouterTool).ToList()
         };
 
         Console.WriteLine($"[OpenRouter] Request body: {JsonSerializer.Serialize(requestBody)}");
@@ -68,7 +68,7 @@ public class OpenRouterService
         }
     }
 
-    private object toOpenRouterTool(ToolConfig tool) {
+    private static object ToOpenRouterTool(ToolConfig tool) {
         return new {
             type = "function",
             function = new {
@@ -79,7 +79,7 @@ public class OpenRouterService
         };
     }
 
-    public object toOpenRouterMessage(Models.Message message) {
+    private static object ToOpenRouterMessage(Models.Message message) {
         if (message is AssistantMessage assistantMsg)
         {
             var result = new Dictionary<string, object>
@@ -140,7 +140,7 @@ public class OpenRouterService
     }
 
     //TODO simplify this
-    private List<object> FlattenMessages(IEnumerable<object> messageObjects)
+    private static List<object> FlattenMessages(IEnumerable<object> messageObjects)
     {
         var result = new List<object>();
         foreach (var msg in messageObjects)
@@ -160,7 +160,7 @@ public class OpenRouterService
         return result;
     }
 
-    private ILlmResponse ParseOpenRouterResponse(string jsonResponse)
+    private static ILlmResponse ParseOpenRouterResponse(string jsonResponse)
     {
         using var document = JsonDocument.Parse(jsonResponse);
         var root = document.RootElement;
@@ -221,39 +221,10 @@ public class OpenRouterService
             }
         }
 
-        return new Models.LlmResponse
+        return new LlmResponse
         {
             Content = content,
             ToolCalls = toolCalls
         };
-    }
-
-    private class OpenRouterResponse
-    {
-        public List<Choice>? Choices { get; set; }
-    }
-
-    private class Choice
-    {
-        public Message? Message { get; set; }
-    }
-
-    private class Message
-    {
-        public string? Content { get; set; }
-        public List<ToolCall>? ToolCalls { get; set; }
-    }
-
-    private class ToolCall
-    {
-        public string? Id { get; set; }
-        public string? Type { get; set; }
-        public ToolCallFunction? Function { get; set; }
-    }
-
-    private class ToolCallFunction
-    {
-        public string? Name { get; set; }
-        public string? Arguments { get; set; }
     }
 }

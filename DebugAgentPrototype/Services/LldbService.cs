@@ -9,27 +9,19 @@ using DebugAgentPrototype.Models;
 
 namespace DebugAgentPrototype.Services;
 
-public class LldbService
+public class LldbService(AppState appState)
 {
     private Process? _lldbProcess;
     private StreamWriter? _lldbInput;
     private readonly StringBuilder _outputBuffer = new();
-    private readonly object _outputLock = new();
-    private bool _isRunning;
-    private readonly AppState _appState;
 
     public event EventHandler<string>? OutputReceived;
 
-    public bool IsRunning => _isRunning;
-
-    public LldbService(AppState appState)
-    {
-        _appState = appState;
-    }
+    public bool IsRunning => _lldbProcess != null && _lldbInput != null;
 
     public async Task InitializeAsync()
     {
-        if (_isRunning)
+        if (_lldbProcess != null)
         {
             throw new InvalidOperationException("LLDB session is already running");
         }
@@ -49,9 +41,7 @@ public class LldbService
             StandardOutputEncoding = new UTF8Encoding(false),
             StandardErrorEncoding = new UTF8Encoding(false)
         };
-
-        Console.WriteLine($"[LLDB] Starting process with arguments: {string.Join(" ", startInfo.Arguments)}");
-
+        
         _lldbProcess = new Process { StartInfo = startInfo };
 
         _lldbProcess.OutputDataReceived += (sender, e) =>
@@ -75,65 +65,23 @@ public class LldbService
         _lldbInput = new StreamWriter(_lldbProcess.StandardInput.BaseStream, new UTF8Encoding(false));
         _lldbProcess.BeginOutputReadLine();
         _lldbProcess.BeginErrorReadLine();
-        _isRunning = true;
 
         await Task.Delay(500);
     }
 
     public async Task SendCommandAsync(string command)
     {
-        if (!_isRunning || _lldbInput == null)
-        {
-            throw new InvalidOperationException("LLDB session is not running");
-        }
-
         Console.WriteLine($"[LLDB] Sending command: {command}");
         await _lldbInput.WriteLineAsync(command);
         await _lldbInput.FlushAsync();
     }
 
-    public void Stop()
-    {
-        if (!_isRunning)
-            return;
-
-        try
-        {
-            _lldbInput?.Close();
-            _lldbProcess?.Kill();
-            _lldbProcess?.WaitForExit(1000);
-        }
-        catch
-        {
-            // Ignore errors during cleanup
-        }
-        finally
-        {
-            _lldbProcess?.Dispose();
-            _lldbProcess = null;
-            _lldbInput = null;
-            _isRunning = false;
-        }
-    }
-
     private void OnOutputReceived(string output)
     {
-        lock (_outputLock)
-        {
-            _outputBuffer.AppendLine(output);
-            _appState.LldbOutput = _outputBuffer.ToString();
-        }
+        _outputBuffer.AppendLine(output);
+        appState.LldbOutput = _outputBuffer.ToString();
 
         OutputReceived?.Invoke(this, output);
-    }
-
-
-    public string GetOutput()
-    {
-        lock (_outputLock)
-        {
-            return _outputBuffer.ToString();
-        }
     }
 }
 
