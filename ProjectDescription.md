@@ -101,6 +101,7 @@ directions
 
 
 TODO Code
+  - TODO class vs interface
   - clean logging
   - TODO clean the readme
   - privatte methods convention 

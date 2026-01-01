@@ -27,7 +27,7 @@ public class OpenRouterService
         _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
     }
     
-    public async Task<ILlmResponse> CallModelAsync(List<Message> messages, List<ToolConfig>? tools = null)
+    public async Task<AssistantMessage> CallModelAsync(List<Message> messages, List<ToolConfig>? tools = null)
     {
         var requestBody = new
         {
@@ -54,7 +54,7 @@ public class OpenRouterService
                 throw new Exception("Failed to parse OpenRouter API response");
             }
 
-            return result;
+            return ToAssistantMessage(result);
         }
         catch (HttpRequestException ex)
         {
@@ -131,8 +131,7 @@ public class OpenRouterService
         throw new Exception($"Unknown message type: {message.GetType()}");
     }
     
-    //TODO review
-    private static ILlmResponse ParseOpenRouterResponse(string jsonResponse)
+    private static OpenRouterResponse ParseOpenRouterResponse(string jsonResponse)
     {
         using var document = JsonDocument.Parse(jsonResponse);
         var root = document.RootElement;
@@ -157,7 +156,7 @@ public class OpenRouterService
             ? contentElement.GetString() ?? "" 
             : "";
 
-        var toolCalls = new List<IToolCall>();
+        var toolCalls = new List<OpenRouterToolCall>();
         if (messageElement.TryGetProperty("tool_calls", out var toolCallsElement) && 
             toolCallsElement.ValueKind == JsonValueKind.Array)
         {
@@ -177,7 +176,7 @@ public class OpenRouterService
                         ? argsElement.GetString() ?? "" 
                         : "";
 
-                    toolCalls.Add(new LlmToolCall
+                    toolCalls.Add(new OpenRouterToolCall
                     {
                         Id = id,
                         Name = name,
@@ -187,10 +186,39 @@ public class OpenRouterService
             }
         }
 
-        return new LlmResponse
+        return new OpenRouterResponse
         {
             Content = content,
             ToolCalls = toolCalls
         };
+    }
+
+    private static AssistantMessage ToAssistantMessage(OpenRouterResponse response)
+    {
+        var toolCallRequests = response.ToolCalls.Select(tc => new ToolCallRequest
+        {
+            Id = tc.Id,
+            Name = tc.Name,
+            Arguments = tc.Arguments
+        }).ToList();
+        
+        return new AssistantMessage 
+        { 
+            Text = response.Content,
+            ToolCallRequests = toolCallRequests
+        };
+    }
+
+    private class OpenRouterResponse
+    {
+        public string Content { get; set; } = "";
+        public List<OpenRouterToolCall> ToolCalls { get; set; } = new List<OpenRouterToolCall>();
+    }
+
+    private class OpenRouterToolCall
+    {
+        public string Id { get; set; } = "";
+        public string Name { get; set; } = "";
+        public string Arguments { get; set; } = "";
     }
 }

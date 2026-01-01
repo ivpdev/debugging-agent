@@ -99,9 +99,7 @@ public class AgentService(
         AssistantMessage assistantMessage;
 
         do {
-            var response = await openRouterService.CallModelAsync(appState.Messages, tools);
-
-            assistantMessage = ToAssistantMessage(response);
+            assistantMessage = await openRouterService.CallModelAsync(appState.Messages, tools);
             appState.Messages.Add(assistantMessage);
             MessageAdded?.Invoke(this, assistantMessage);
             
@@ -116,22 +114,6 @@ public class AgentService(
             }
         } while (!IsTaskComplete(assistantMessage) && !IsMaxTurnsReached(appState.Messages)); //TODO the assistant can both call tools and respond to user. double check if it's considered in both conditions
     
-    }
-
-    private static AssistantMessage ToAssistantMessage(ILlmResponse response)
-    {
-        var toolCallRequests = response.ToolCalls.Select(tc => new ToolCallRequest
-        {
-            Id = tc.Id,
-            Name = tc.Name,
-            Arguments = tc.Arguments
-        }).ToList();
-        
-        return new AssistantMessage 
-        { 
-            Text = response.Content,
-            ToolCallRequests = toolCallRequests
-        };
     }
 
     public static List<Message> InitMessages()
