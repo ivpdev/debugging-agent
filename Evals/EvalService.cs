@@ -100,13 +100,11 @@ public class EvalService
     {
         return conversation.Where(m => m.Role != MessageRole.System).ToList();
     }
-
-    //TODO clean the prompt
+    
     private async Task<string> EvaluateConversationAsync(List<Message> conversationForEvaluation,
         string expectedCriteria)
     {
         var openRouterService = new OpenRouterService();
-        var judgePrompt = BuildJudgePrompt(conversationForEvaluation, expectedCriteria);
         var judgeMessages = new List<Message>
         {
             new SystemMessage(
@@ -114,21 +112,16 @@ public class EvalService
                 Analyze the chat history and determine if the evaluation criteria are met. 
                 Evaluate only what is explicitly stated in the criteria, don't assume anything.
 Your response must start with either PASS or FAIL. Provide reasoning on a new line."),
-            new UserMessage(judgePrompt)
-        };
-
-        var response = await openRouterService.CallModelAsync(judgeMessages, null);
-        return response.Text ?? "FAIL\n\nJudge did not return a response";
-    }
-
-    private string BuildJudgePrompt(List<Message> conversationForEvaluation, string expectedCriteria)
-    {
-        return $@"
+            new UserMessage($@"
                 ## Expected Criteria:
                 {expectedCriteria}
 
                 ## Chat History:
-                {ToString(conversationForEvaluation)}";
+                {ToString(conversationForEvaluation)}")
+        };
+
+        var response = await openRouterService.CallModelAsync(judgeMessages, null);
+        return response.Text ?? "FAIL\n\nJudge did not return a response";
     }
 
     private async Task<List<EvalDefinition>> ReadEvalDefinitionsAsync()

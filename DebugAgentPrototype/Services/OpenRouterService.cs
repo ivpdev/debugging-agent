@@ -12,7 +12,6 @@ namespace DebugAgentPrototype.Services;
 public class OpenRouterService
 {
     private readonly HttpClient _httpClient;
-    //TODO separate base URL and move to config
     private const string ApiUrl = "https://openrouter.ai/api/v1/chat/completions";
 
     public OpenRouterService()
@@ -115,7 +114,7 @@ public class OpenRouterService
             return new Dictionary<string, object>
             {
                 ["role"] = "user",
-                ["content"] = userMsg.Text
+                ["content"] = userMsg.Text ?? ""
             };
         }
 

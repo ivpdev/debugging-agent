@@ -8,7 +8,6 @@ using ReactiveUI;
 
 namespace DebugAgentPrototype.ViewModels;
 
-//TODO review the code
 public class LldbOutputViewModel : ReactiveObject
 {
     private readonly LldbService _lldbService;
@@ -71,7 +70,6 @@ public class LldbOutputViewModel : ReactiveObject
 
         try
         {
-            //await _lldbService.SendCommandAsync(command);
             await _agentService.SendUserLldbCommandAsync(command);
             Dispatcher.UIThread.Post(() =>
             {
