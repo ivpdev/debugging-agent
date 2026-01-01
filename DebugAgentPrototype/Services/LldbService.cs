@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using DebugAgentPrototype.Models;
 
@@ -14,7 +15,7 @@ public class LldbService(AppState appState)
     private Process? _lldbProcess;
     private StreamWriter? _lldbInput;
     private readonly StringBuilder _outputBuffer = new();
-    private readonly object _outputLock = new object();
+    private readonly Lock _outputLock = new();
 
     public event EventHandler<string>? OutputReceived;
 
@@ -46,7 +47,7 @@ public class LldbService(AppState appState)
         
         _lldbProcess = new Process { StartInfo = startInfo };
 
-        _lldbProcess.OutputDataReceived += (sender, e) =>
+        _lldbProcess.OutputDataReceived += (_, e) =>
         {
             if (!string.IsNullOrEmpty(e.Data))
             {
@@ -54,7 +55,7 @@ public class LldbService(AppState appState)
             }
         };
 
-        _lldbProcess.ErrorDataReceived += (sender, e) =>
+        _lldbProcess.ErrorDataReceived += (_, e) =>
         {
             if (!string.IsNullOrEmpty(e.Data))
             {

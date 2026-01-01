@@ -11,7 +11,6 @@ using DebugAgentPrototype.Models;
 using DebugAgentPrototype.Services;
 using DebugAgentPrototype.Services.tools;
 using ReactiveUI;
-using ToolCall = DebugAgentPrototype.Services.tools.ToolCall;
 
 namespace DebugAgentPrototype.ViewModels;
 
@@ -196,9 +195,9 @@ public class UIToolCall
 
     public UIToolCall(ToolCall toolCall)
     {
-        Id = toolCall.Id;
-        Name = toolCall.Name;
-        Arguments = toolCall.Arguments;
+        Id = toolCall.Request.Id;
+        Name = toolCall.Request.Name;
+        Arguments = toolCall.Request.Arguments;
         Result = toolCall.Result != null ? JsonSerializer.Serialize(toolCall.Result) : string.Empty;
     }
 }

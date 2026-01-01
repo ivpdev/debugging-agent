@@ -8,6 +8,7 @@ using ReactiveUI;
 
 namespace DebugAgentPrototype.ViewModels;
 
+//TODO review the code
 public class LldbOutputViewModel : ReactiveObject
 {
     private readonly LldbService _lldbService;

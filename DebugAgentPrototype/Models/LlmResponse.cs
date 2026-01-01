@@ -2,6 +2,7 @@ using System.Collections.Generic;
 
 namespace DebugAgentPrototype.Models;
 
+//TODO review
 public interface ILlmResponse {
     string Content { get; }
     List<IToolCall> ToolCalls { get; }
@@ -19,7 +20,7 @@ public class LlmResponse : ILlmResponse
     public List<IToolCall> ToolCalls { get; set; } = new List<IToolCall>();
 }
 
-public class ToolCall : IToolCall
+public class LlmToolCall : IToolCall
 {
     public string Id { get; set; } = "";
     public string Name { get; set; } = "";

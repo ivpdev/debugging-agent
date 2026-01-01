@@ -16,7 +16,7 @@ public class ToolsService(AppState appState, LldbService lldbService)
         [
             ToolGetSourceCode.GetConfig(),
             ToolStdinWrite.GetConfig(),
-           // ToolSetBreakpoint.GetConfig()
+           // ToolSetBreakpoint.GetConfig() with current evals the assistant performs better using "stdin_write" as universal tool to operate the LLDB. However it should be reevaluated with more evals
         ];
     }
 
@@ -32,9 +32,7 @@ public class ToolsService(AppState appState, LldbService lldbService)
 
         return new ToolCall
         {
-            Id = toolCallRequest.Id,
-            Name = toolCallRequest.Name,
-            Arguments = toolCallRequest.Arguments,
+            Request = toolCallRequest,
             Result = result
         };
     }
@@ -50,20 +48,10 @@ public class ToolsService(AppState appState, LldbService lldbService)
     }
 }
 
+//TODO move to models
 public class ToolConfig(string name, string description, object parameters)
 {
     public string Name { get; } = name;
     public string? Description { get; } = description;
     public object Parameters { get; } = parameters;
-}
-
-public class ToolCallRequest {
-    public string Id { get; init; } = string.Empty;
-    public string Name { get; init; } = string.Empty;
-    public string Arguments { get; init; } = string.Empty;
-}
-
-//FIXME smell
-public class ToolCall: ToolCallRequest {
-    public object? Result { get; init; }
 }

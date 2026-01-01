@@ -4,18 +4,7 @@
              x:Class="DebugAgentPrototype.Views.LldbOutputView"
              x:DataType="vm:LldbOutputViewModel">
     <UserControl.Styles>
-        <Style Selector="TextBox#LldbOutputBox">
-            <Setter Property="Background" Value="Black"/>
-        </Style>
-        <Style Selector="TextBox#LldbOutputBox:pointerover">
-            <Setter Property="Background" Value="Black"/>
-        </Style>
-        <Style Selector="TextBox#LldbOutputBox:pressed">
-            <Setter Property="Background" Value="Black"/>
-        </Style>
-        <Style Selector="TextBox#LldbOutputBox:focus">
-            <Setter Property="Background" Value="Black"/>
-        </Style>
+
     </UserControl.Styles>
     <Grid>
         <Grid.RowDefinitions>
@@ -32,7 +21,8 @@
                 Background="Black"
                 BorderThickness="0"
                 Margin="10,0,10,10">
-            <ScrollViewer VerticalScrollBarVisibility="Auto"
+            <ScrollViewer x:Name="LldbOutputScrollViewer"
+                          VerticalScrollBarVisibility="Auto"
                           HorizontalScrollBarVisibility="Auto">
                 <TextBox x:Name="LldbOutputBox"
                          Text="{Binding LldbOutput, Mode=OneWay}" 

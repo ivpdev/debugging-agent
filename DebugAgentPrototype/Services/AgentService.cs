@@ -25,7 +25,7 @@ public class AgentService(
     private static bool IsMaxTurnsReached(List<Message> messages)
     {
         var lastUserMessageIndex = messages.FindLastIndex(m => m.Role == MessageRole.User);
-    
+
         var assistantMessagesAfterLastUserCount = messages
             .Skip(lastUserMessageIndex + 1).Count(m => m.Role == MessageRole.Assistant);
 
@@ -37,9 +37,31 @@ public class AgentService(
 
     public void AddUserMessage(string userText)
     {
-        var newMessage = new UserMessage(userText) ;
+        var newMessage = new UserMessage(userText);
         appState.Messages.Add(newMessage);
         MessageAdded?.Invoke(this, newMessage);
+    }
+
+    public async Task SendUserLldbCommandAsync(string command)
+    {
+        /*_lldbService.SendCommandAsync(command);
+        await Task.Delay(500);
+        var lldbOutput = await _lldbService.GetOutputAsync();
+
+        registerUserLldbCommand(command, lldbOutput);
+        //TODO user call the lldb service
+        //TODO register user LLbd*/
+    }
+
+    private void registerUserLldbCommand(string command, string lldbOutput)
+    {
+        var UserMessage = new UserMessage(command, [new ToolCallRequest
+        {
+            Id = "user_stdin_write_" + Guid.NewGuid().ToString(),
+            Name = "lldb",
+            Arguments = lldbOutput
+        }]);
+
     }
 
     public async Task ProcessLastUserMessageAsync() {

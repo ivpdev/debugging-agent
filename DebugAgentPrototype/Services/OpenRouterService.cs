@@ -107,7 +107,7 @@ public class OpenRouterService
             {
                 ["role"] = "tool",
                 ["content"] = JsonSerializer.Serialize(toolMsg.ToolCall.Result ?? ""),
-                ["tool_call_id"] = toolMsg.ToolCall.Id
+                ["tool_call_id"] = toolMsg.ToolCall.Request.Id
             };
         }
 
@@ -178,7 +178,7 @@ public class OpenRouterService
                         ? argsElement.GetString() ?? "" 
                         : "";
 
-                    toolCalls.Add(new Models.ToolCall
+                    toolCalls.Add(new LlmToolCall
                     {
                         Id = id,
                         Name = name,
