@@ -28,7 +28,8 @@ public class EvalService
     private class EvalResult(List<Message> conversation, List<Message> conversationForEvaluation, string judgement)
     {
         public readonly List<Message> Conversation = conversation;
-        //convesation without the information the evalator is not allowed to know (e.g. the system prompt)
+
+        //convesation without the information the evaluator is not allowed to know (e.g. the system prompt)
         public readonly List<Message> ConversationForEvaluation = conversationForEvaluation;
         public readonly string Judgement = judgement;
     }
@@ -96,7 +97,7 @@ public class EvalService
         return appState.Messages;
     }
 
-    private List<Message> CleanConversationForEvaluation(List<Message> conversation)
+    private static List<Message> CleanConversationForEvaluation(List<Message> conversation)
     {
         return conversation.Where(m => m.Role != MessageRole.System).ToList();
     }
@@ -110,8 +111,9 @@ public class EvalService
             new SystemMessage(
                 @"You are an evaluation judge. 
                 Analyze the chat history and determine if the evaluation criteria are met. 
-                Evaluate only what is explicitly stated in the criteria, don't assume anything.
-Your response must start with either PASS or FAIL. Provide reasoning on a new line."),
+                Evaluate strictly according to the criteria, even if the criteria are not perfect.  
+                
+                Your response must start with either PASS or FAIL. Provide reasoning on a new line."),
             new UserMessage($@"
                 ## Expected Criteria:
                 {expectedCriteria}
@@ -259,8 +261,11 @@ private string GetEvalsDirectory()
 
     private static void PrintResults(Eval[] evals)
     {
+        Console.WriteLine("--------------------------------");
+        Console.WriteLine($"Evals results:");
         foreach (var eval in evals)
         {
+
             var judgement = eval.Result.Judgement;
             var passed = judgement.StartsWith("PASS", StringComparison.OrdinalIgnoreCase);
             var status = passed ? "PASSED" : "FAILED";

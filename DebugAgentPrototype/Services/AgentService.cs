@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
-using System.Text.Json;
 using System.Threading.Tasks;
 using DebugAgentPrototype.Models;
 
@@ -46,7 +44,6 @@ public class AgentService(
     public async Task SendUserLldbCommandAsync(string command)
     {
         await lldbService.SendCommandAsync(command);
-        await Task.Delay(500);
         var lldbOutput = appState.LldbOutput;
 
         var newMessage = new UserLldbCommandMessage(command, lldbOutput);

@@ -65,8 +65,21 @@ public class LldbService(AppState appState)
         _lldbInput = new StreamWriter(_lldbProcess.StandardInput.BaseStream, new UTF8Encoding(false));
         _lldbProcess.BeginOutputReadLine();
         _lldbProcess.BeginErrorReadLine();
+        
+        await WaitUntilDebuggerSessionIsReadyAsync();
+        
+    }
 
+    private static async Task WaitUntilDebuggerSessionIsReadyAsync()
+    {
+        //TODO find a way to detect debugger session readiness 
         await Task.Delay(500);
+    }
+
+    private static async Task WaitUntilCommandExecutionCompletesAsync()
+    {
+        //TODO find a way to detect command execution completeness 
+        await Task.Delay(1000); 
     }
 
     public async Task SendCommandAsync(string command)
@@ -74,6 +87,7 @@ public class LldbService(AppState appState)
         Console.WriteLine($"[LLDB] Sending command: {command}");
         await _lldbInput?.WriteLineAsync(command)!;
         await _lldbInput.FlushAsync();
+        await WaitUntilCommandExecutionCompletesAsync();
     }
 
     private void OnOutputReceived(string output)

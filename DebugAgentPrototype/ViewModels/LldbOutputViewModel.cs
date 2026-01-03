@@ -31,10 +31,7 @@ public class LldbOutputViewModel : ReactiveObject
             canSendLldb);
     }
 
-    public string LldbOutput
-    {
-        get => _appState.LldbOutput;
-    }
+    public string LldbOutput => _appState.LldbOutput;
 
     public string LldbInput
     {

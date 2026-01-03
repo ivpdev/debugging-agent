@@ -15,9 +15,7 @@ public class MainViewModel : ReactiveObject
     public ChatViewModel ChatViewModel { get; }
     public string DebuggedFileName { get; }
 
-    public MainViewModel(
-        AgentService agentService,
-        AppState appState,
+    public MainViewModel(AppState appState,
         LldbService lldbService,
         LldbOutputViewModel lldbOutputViewModel,
         ChatViewModel chatViewModel)

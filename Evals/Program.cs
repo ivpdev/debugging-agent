@@ -10,15 +10,14 @@ class Program
 {
     static async Task Main(string[] args)
     {
-        LoadEnvironmentFile();
-        
-        var evalService = new EvalService();
-
         try
         {
-            if (args.Length > 0 && !string.IsNullOrWhiteSpace(args[0]))
+            Env.Load();
+            var evalService = new EvalService();
+            var evalName = GetEvalNameFromArguments(args);
+            
+            if (evalName != null)
             {
-                var evalName = args[0].Trim();
                 await evalService.RunEvalByNameAsync(evalName);
             }
             else
@@ -33,46 +32,13 @@ class Program
         }
     }
 
-    private static void LoadEnvironmentFile()
+    private static string? GetEvalNameFromArguments(string[] args)
     {
-        var possiblePaths = new[]
+        if (args.Length > 0 && !string.IsNullOrWhiteSpace(args[0]))
         {
-            Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".env")),
-            Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "DebugAgentPrototype", ".env")),
-            Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".env")),
-            Path.Combine(Directory.GetCurrentDirectory(), ".env"),
-            Path.Combine(Directory.GetCurrentDirectory(), "DebugAgentPrototype", ".env"),
-            Path.Combine(AppContext.BaseDirectory, ".env")
-        };
-
-        bool loaded = false;
-        foreach (var envPath in possiblePaths)
-        {
-            var fullPath = Path.GetFullPath(envPath);
-            if (File.Exists(fullPath))
-            {
-                Console.WriteLine($"Loading .env from: {fullPath}");
-                Env.Load(fullPath);
-                loaded = true;
-                break;
-            }
-        }
-
-        if (!loaded)
-        {
-            try
-            {
-                Env.Load();
-                loaded = true;
-            }
-            catch
-            {
-            }
-        }
-
-        if (!loaded)
-        {
-            Console.WriteLine("Warning: .env file not found. Make sure OPENROUTER_API_KEY is set.");
+            return args[0].Trim();
+        } else {
+            return null;
         }
     }
 }

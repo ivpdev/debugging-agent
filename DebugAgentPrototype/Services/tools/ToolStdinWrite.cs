@@ -47,9 +47,6 @@ public class ToolStdinWrite(AppState appState, LldbService lldbService)
         {
             var text = ParseTextFromParameters(parameters);
             await lldbService.SendCommandAsync(text);
-            
-            //FIXME timeout to wait for result
-            await Task.Delay(1000);
             return appState.LldbOutput;
         }
         catch (JsonException ex)
