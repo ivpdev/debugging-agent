@@ -9,39 +9,34 @@ lldb is installed an available in the command line.
 
 ## Running Application
 
-1. Set `OPENROUTER_API_KEY` in a `.env` file. The application will look for `.env` in the following locations (in order):
-   - `DebugAgentPrototype/` directory (project root)
-   - Workspace root (solution root)
-   - Current working directory (where you run the command from)
-   - Executable directory (`bin/Debug/net9.0/`)
-
-   Create a `.env` file with:
-   ```
-   OPENROUTER_API_KEY=your_api_key_here
-   ```
-
-2. Run the application from the `DebugAgentPrototype/` directory:
+1. Go to the application directory `DebugAgentPrototype/`
    ```bash
    cd DebugAgentPrototype
+   ```
+   
+2. Set `OPENROUTER_API_KEY` in a `.env` file: make a copy of .env.sample and replace the placeholder. 
+   ```bash
+   cp .env.sample .env 
+   ```
+
+2. Run the application:
+   ```bash
    dotnet run
    ```
 
 ## Running Evals
 
-1. Set `OPENROUTER_API_KEY` in a `.env` file. The evals program will look for `.env` in the following locations (in order):
-   - `Evals/` directory (project root)
-   - `Evals/bin/DebugAgentPrototype/.env` (2 levels up from executable, then into DebugAgentPrototype)
-   - Workspace root (solution root)
-   - Current working directory (where you run the command from)
-   - `Current working directory/DebugAgentPrototype/.env`
-   - Executable directory (`bin/Debug/net9.0/`)
-
-   Create a `.env` file with:
+1. Go to the application directory `Evals/`
+   ```bash
+   cd DebugAgentPrototype
    ```
-   OPENROUTER_API_KEY=your_api_key_here
+   
+2. Set `OPENROUTER_API_KEY` in a `.env` file: make a copy of .env.sample and replace the placeholder. 
+   ```bash
+   cp .env.sample .env 
    ```
 
-2. Run evals from the `Evals/` directory:
+3. Run evals:
 
 ```bash
 # Run all evals
@@ -57,5 +52,5 @@ cd Evals
 dotnet run set-breakpoint
 ```
 
-Results are written to `Evals/evals/evals/<eval-name>/result.md` and `conversation-for-evaluation.json`.
+Results of individual evals execution are written to `Evals/evals/evals/<eval-name>/result.md`.
 
