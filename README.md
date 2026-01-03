@@ -2,6 +2,8 @@
 
 > **IMPORTANT** The code is not meant to be production-ready. The intention of this prototype is to show the solution design. Technical aspects like handling or edge cases, proper error handling, logging etc. were omitted for sake of readability.
 
+The program was tested on MacOS(ARM).
+
 ## Prerequisites
 
 .NET must be installed.
@@ -19,7 +21,7 @@ lldb is installed an available in the command line.
    cp .env.sample .env 
    ```
 
-2. Run the application:
+3. Run the application:
    ```bash
    dotnet run
    ```
@@ -54,3 +56,11 @@ dotnet run set-breakpoint
 
 Results of individual evals execution are written to `Evals/evals/evals/<eval-name>/result.md`.
 
+## Troubleshooting
+
+If LLDB experiences problems with running the inspected program - recompile it from the source.
+
+```bash
+cd inspected_program
+gcc -g -o game game.c
+```
