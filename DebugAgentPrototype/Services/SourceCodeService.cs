@@ -6,6 +6,9 @@ namespace DebugAgentPrototype.Services;
 
 public class SourceCodeService
 {
+    private static readonly string InspectedProgramBasePath = Path.GetFullPath(
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "inspected_program"));
+    
     public static string GetSourceCode(string filePath)
     {
         return File.ReadAllText(filePath);
@@ -13,11 +16,7 @@ public class SourceCodeService
 
     public static string GetInspectedFilePath()
     {
-        var gamePath = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "test_program", "game.c");
-        if (!Path.IsPathRooted(gamePath))
-        {
-            gamePath = Path.GetFullPath(gamePath);
-        }
+        var gamePath = Path.Combine(InspectedProgramBasePath, "game.c");
 
         if (!File.Exists(gamePath))
         {
@@ -29,11 +28,7 @@ public class SourceCodeService
 
     public static string GetBinaryPath()
     {
-        var gamePath = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "test_program", "game");
-        if (!Path.IsPathRooted(gamePath))
-        {
-            gamePath = Path.GetFullPath(gamePath);
-        }
+        var gamePath = Path.Combine(InspectedProgramBasePath, "game");
 
         if (!File.Exists(gamePath))
         {
